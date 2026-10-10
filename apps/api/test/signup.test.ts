@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { buildApp, WEB_ORIGIN } from "../src/app.js";
 import { getPool } from "../src/db.js";
-import { getRedis } from "../src/redis.js";
+import { delTestCache } from "./redis-helpers.js";
 
 // *.example is RFC 2606 reserved; mirrors apps/ingestion's test-fixture convention.
 const EMAIL = "signup-test@mail.example";
@@ -14,13 +14,8 @@ async function cleanup(): Promise<void> {
   );
   await getPool().query("DELETE FROM users WHERE lower(email) = lower($1)", [EMAIL]);
   // Tests reuse the same email across cases; the signup rate limit (3/hour, §9) is keyed on
-  // it too, so it needs the same kind of reset as the DB rows above. Best-effort: the very
-  // first call can race the client's initial connection (nothing to clean up yet anyway).
-  try {
-    await getRedis().del(`ratelimit:signup:email:${EMAIL}:3600`);
-  } catch {
-    // ignore
-  }
+  // it too, so it needs the same kind of reset as the DB rows above.
+  await delTestCache(`ratelimit:signup:email:${EMAIL}:3600`);
 }
 
 beforeEach(cleanup);

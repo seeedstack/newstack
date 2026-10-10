@@ -51,3 +51,28 @@ describe("CORS headers", () => {
     await app.close();
   });
 });
+
+describe("cache isolation (§10)", () => {
+  it("/auth/* responses never cache", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "POST",
+      url: "/auth/signup",
+      headers: { origin: WEB_ORIGIN, "content-type": "application/json" },
+      payload: { email: "not-an-email", password: "x" },
+    });
+    expect(res.headers["cache-control"]).toBe("no-store");
+    await app.close();
+  });
+
+  it("authenticated /api/* responses are private, no-store", async () => {
+    const app = buildApp();
+    const res = await app.inject({ method: "GET", url: "/api/whoami" });
+    expect(res.headers["cache-control"]).toBe("private, no-store");
+    await app.close();
+  });
+
+  // /api/public/* 's own public, max-age=30 header is exercised by the feed endpoint's
+  // tests once it exists — cachePlugin's hook only runs for routes actually registered in
+  // that scope, same reason the auth-plugin test needed a real /api/whoami route.
+});

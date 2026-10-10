@@ -4,8 +4,15 @@ import Fastify, { type FastifyInstance } from "fastify";
 
 import { WEB_ORIGIN } from "./config.js";
 import { authRoutes } from "./features/auth/routes.js";
+import { curatorRoutes } from "./features/curator/routes.js";
+import { feedRoutes } from "./features/feed/routes.js";
+import { storyRoutes } from "./features/story/routes.js";
+import { ratingCuratorRoutes, ratingPublicRoutes } from "./features/rating/routes.js";
+import { savedRoutes } from "./features/saved/routes.js";
+import { topicRoutes } from "./features/topic/routes.js";
 import { authPlugin } from "./plugins/auth.js";
 import { cachePlugin } from "./plugins/cache.js";
+import { curatorPlugin } from "./plugins/curator.js";
 
 export { WEB_ORIGIN } from "./config.js";
 
@@ -24,16 +31,19 @@ export function buildApp(): FastifyInstance {
   const app = Fastify({ logger: true, trustProxy: TRUSTED_PROXY });
 
   // CSRF defense in depth (§9): SameSite=Strict cookies plus an exact-Origin check plus a
-  // JSON-only content type on every state-changing request.
+  // JSON-only content type on every state-changing request. Doesn't apply to /api/curator/*:
+  // CSRF exploits ambient browser credentials (cookies), and curator routes carry none —
+  // they're authenticated by an explicit header a cross-site page can't attach, and are
+  // called by scripts/tooling with no browser Origin at all.
   app.addHook("onRequest", async (request, reply) => {
-    if (!MUTATING_METHODS.has(request.method)) return;
+    if (!MUTATING_METHODS.has(request.method) || request.url.startsWith("/api/curator/")) return;
     if (request.headers.origin !== WEB_ORIGIN) {
       reply.code(403).send({ error: "origin_mismatch" });
       return reply;
     }
   });
   app.addHook("preValidation", async (request, reply) => {
-    if (!MUTATING_METHODS.has(request.method)) return;
+    if (!MUTATING_METHODS.has(request.method) || request.url.startsWith("/api/curator/")) return;
     const contentType = request.headers["content-type"] ?? "";
     if (!contentType.startsWith("application/json")) {
       reply.code(415).send({ error: "unsupported_content_type" });
@@ -44,6 +54,13 @@ export function buildApp(): FastifyInstance {
   app.addHook("onSend", async (request, reply, payload) => {
     reply.header("Access-Control-Allow-Origin", WEB_ORIGIN);
     reply.header("Access-Control-Allow-Credentials", "true");
+    // §10 cache isolation: authenticated and auth responses never cache; /api/public/*
+    // overrides this with its own public, max-age=30 header (cachePlugin's onSend).
+    if (request.url.startsWith("/auth/")) {
+      reply.header("Cache-Control", "no-store");
+    } else if (request.url.startsWith("/api/") && !request.url.startsWith("/api/public/")) {
+      reply.header("Cache-Control", "private, no-store");
+    }
     return payload;
   });
 
@@ -58,6 +75,10 @@ export function buildApp(): FastifyInstance {
   // keep it from applying to sibling routes registered directly on publicScope.
   app.register(async (publicScope) => {
     await cachePlugin(publicScope);
+    await feedRoutes(publicScope);
+    await storyRoutes(publicScope);
+    await topicRoutes(publicScope);
+    await ratingPublicRoutes(publicScope);
   }, { prefix: "/api/public" });
 
   // /api/* — auth plugin, no cache plugin. Same direct-call reasoning as above.
@@ -66,7 +87,15 @@ export function buildApp(): FastifyInstance {
     // Minimal authenticated echo route — first real consumer of request.userId, and gives
     // the auth plugin an actual registered route to run its hook against.
     apiScope.get("/whoami", async (request) => ({ userId: request.userId }));
+    await savedRoutes(apiScope);
   }, { prefix: "/api" });
+
+  // /api/curator/* — shared-secret auth (curatorPlugin), no user-auth or cache plugin.
+  app.register(async (curatorScope) => {
+    await curatorPlugin(curatorScope);
+    await ratingCuratorRoutes(curatorScope);
+    await curatorRoutes(curatorScope);
+  }, { prefix: "/api/curator" });
 
   return app;
 }
