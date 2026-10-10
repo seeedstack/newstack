@@ -2,6 +2,7 @@
 // "cache isolation is structural, not a convention") — /auth/*, /api/*, /api/public/*.
 import Fastify, { type FastifyInstance } from "fastify";
 
+import { authRoutes } from "./features/auth/routes.js";
 import { authPlugin } from "./plugins/auth.js";
 import { cachePlugin } from "./plugins/cache.js";
 
@@ -38,10 +39,8 @@ export function buildApp(): FastifyInstance {
 
   app.get("/health", async () => ({ status: "ok" }));
 
-  // /auth/* — neither plugin; CSRF checks and rate limits only (added in later tasks).
-  app.register(async (_authScope) => {
-    // Routes land in the signup/login/refresh/reset tasks.
-  }, { prefix: "/auth" });
+  // /auth/* — neither plugin; CSRF checks and rate limits only (rate limits: later task).
+  app.register(authRoutes, { prefix: "/auth" });
 
   // /api/public/* — cache plugin, no auth plugin: handlers here cannot read user identity.
   app.register(async (publicScope) => {
