@@ -25,9 +25,14 @@ def detect_language(text: str, source_language: str, model=None) -> str:
     if len(normalized) < MIN_CHARS:
         return source_language
     m = model if model is not None else _get_model()
-    labels, probs = m.predict(normalized, k=1)
-    detected = labels[0].replace("__label__", "")
-    confidence = probs[0]
+    # m.predict() wraps its result in np.array(..., copy=False), which raises under
+    # NumPy 2.x (fasttext-wheel 0.9.2 predates that change) — call the underlying
+    # binding directly instead, same contract (list of (prob, label) tuples).
+    predictions = m.f.predict(normalized + "\n", 1, 0.0, "strict")
+    if not predictions:
+        return source_language
+    confidence, label = predictions[0]
+    detected = label.replace("__label__", "")
     return detected if confidence >= OVERRIDE_THRESHOLD else source_language
 
 

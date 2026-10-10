@@ -6,7 +6,7 @@ import seed_sources
 DSN = db.DSN
 
 
-def test_seed_inserts_five_sources_then_is_idempotent():
+def test_seed_inserts_all_sources_then_is_idempotent():
     with psycopg.connect(DSN, autocommit=True) as conn:
         conn.execute("DELETE FROM source_ingestion_state WHERE source_id IN "
                      "(SELECT id FROM sources WHERE domain = ANY(%s))",
@@ -18,7 +18,7 @@ def test_seed_inserts_five_sources_then_is_idempotent():
         first_count = seed_sources.seed(conn)
         second_count = seed_sources.seed(conn)
 
-    assert first_count == 5
+    assert first_count == len(seed_sources.SOURCES)
     assert second_count == 0
 
     with psycopg.connect(DSN, autocommit=True) as conn:
