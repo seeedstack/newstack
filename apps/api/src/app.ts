@@ -43,13 +43,19 @@ export function buildApp(): FastifyInstance {
   app.register(authRoutes, { prefix: "/auth" });
 
   // /api/public/* — cache plugin, no auth plugin: handlers here cannot read user identity.
+  // The plugin is called directly (not via .register()) so its hook lands on this same
+  // scope instead of an isolated child context — Fastify's encapsulation would otherwise
+  // keep it from applying to sibling routes registered directly on publicScope.
   app.register(async (publicScope) => {
-    await publicScope.register(cachePlugin);
+    await cachePlugin(publicScope);
   }, { prefix: "/api/public" });
 
-  // /api/* — auth plugin, no cache plugin.
+  // /api/* — auth plugin, no cache plugin. Same direct-call reasoning as above.
   app.register(async (apiScope) => {
-    await apiScope.register(authPlugin);
+    await authPlugin(apiScope);
+    // Minimal authenticated echo route — first real consumer of request.userId, and gives
+    // the auth plugin an actual registered route to run its hook against.
+    apiScope.get("/whoami", async (request) => ({ userId: request.userId }));
   }, { prefix: "/api" });
 
   return app;
