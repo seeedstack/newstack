@@ -19,16 +19,30 @@ export function getPool(): Pool {
   return pool;
 }
 
+const MAX_TRANSACTION_RETRIES = 3;
+
+// Retries on deadlock_detected / serialization_failure: normal, expected outcomes under
+// concurrent transactional load, not bugs — Postgres's own docs recommend retrying these.
+function isRetryableTransactionError(err: unknown): boolean {
+  const code = (err as { code?: string } | null)?.code;
+  return code === "40P01" || code === "40001";
+}
+
 export async function withTransaction<T>(pool: Pool, fn: (client: PoolClient) => Promise<T>): Promise<T> {
   const client = await pool.connect();
   try {
-    await client.query("BEGIN");
-    const result = await fn(client);
-    await client.query("COMMIT");
-    return result;
-  } catch (err) {
-    await client.query("ROLLBACK");
-    throw err;
+    for (let attempt = 1; ; attempt++) {
+      try {
+        await client.query("BEGIN");
+        const result = await fn(client);
+        await client.query("COMMIT");
+        return result;
+      } catch (err) {
+        await client.query("ROLLBACK");
+        if (isRetryableTransactionError(err) && attempt < MAX_TRANSACTION_RETRIES) continue;
+        throw err;
+      }
+    }
   } finally {
     client.release();
   }

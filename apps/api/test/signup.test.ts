@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { buildApp, WEB_ORIGIN } from "../src/app.js";
 import { getPool } from "../src/db.js";
+import { getRedis } from "../src/redis.js";
 
 // *.example is RFC 2606 reserved; mirrors apps/ingestion's test-fixture convention.
 const EMAIL = "signup-test@mail.example";
@@ -12,6 +13,14 @@ async function cleanup(): Promise<void> {
     [EMAIL]
   );
   await getPool().query("DELETE FROM users WHERE lower(email) = lower($1)", [EMAIL]);
+  // Tests reuse the same email across cases; the signup rate limit (3/hour, §9) is keyed on
+  // it too, so it needs the same kind of reset as the DB rows above. Best-effort: the very
+  // first call can race the client's initial connection (nothing to clean up yet anyway).
+  try {
+    await getRedis().del(`ratelimit:signup:email:${EMAIL}:3600`);
+  } catch {
+    // ignore
+  }
 }
 
 beforeEach(cleanup);
@@ -82,6 +91,18 @@ describe("POST /auth/signup", () => {
     const res = await post(app, { email: EMAIL, password: "qwertyuiop" });
     expect(res.statusCode).toBe(400);
     expect(res.json()).toEqual({ error: "common_password" });
+    await app.close();
+  });
+
+  it("rate-limits repeated signups for the same email (§9: 3/hour)", async () => {
+    const app = buildApp();
+    for (let i = 0; i < 3; i++) {
+      const res = await post(app, { email: EMAIL, password: "a-strong-passphrase" });
+      expect(res.statusCode).toBe(202);
+    }
+    const fourth = await post(app, { email: EMAIL, password: "a-strong-passphrase" });
+    expect(fourth.statusCode).toBe(429);
+    expect(fourth.json()).toEqual({ error: "rate_limited" });
     await app.close();
   });
 });
