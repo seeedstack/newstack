@@ -1,0 +1,33 @@
+# infra/docker-compose.yml
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: newstack
+      POSTGRES_PASSWORD: newstack
+      POSTGRES_DB: newstack
+      POSTGRES_INITDB_ARGS: "--locale=C.UTF-8 --encoding=UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U newstack"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ingestion:
+    build: ../apps/ingestion
+    environment:
+      DATABASE_URL: postgresql://newstack:newstack@db:5432/newstack
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ingestion_models:/app/models
+
+volumes:
+  pgdata:
+  ingestion_models:

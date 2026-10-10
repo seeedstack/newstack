@@ -1,0 +1,7 @@
+host_aliases: {}
+extra_tracking_params: []
+keep_hashbang: true
+date_fields: [published, updated]
+title_cleanup: []
+excerpt_source: [summary, description, content]
+max_items_per_run: 200

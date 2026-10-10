@@ -1,0 +1,9 @@
+cluster_version: v1
+embedding_model: all-MiniLM-L6-v2@1110a243fdf4706b3f48f1d95db1a4f5529b4d41
+similarity_threshold: 0.72
+candidate_window_hours: 72
+stay_threshold: 0.67
+move_margin: 0.05
+boundary_epsilon: 1.0e-9
+max_embed_attempts: 5
+supported_languages: [en]

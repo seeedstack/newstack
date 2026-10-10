@@ -1,0 +1,2 @@
+title_cleanup:
+  - '\s*-\s*Times of India$'

@@ -1,0 +1,11 @@
+version: e1
+max_tokens: 256
+# Volatile fragments stripped before hashing/embedding — conservative denylist, not adapter-specific
+# title suffixes (those live in each source adapter's title_cleanup).
+denylist_patterns:
+  - '(?i)updated:?\s.*$'
+  - '(?i)last updated.*$'
+  - '(?i)\d+\s+(min|mins|minute|minutes|hour|hours)\s+ago$'
+  - '(?i)\s*read more\s*$'
+  - '(?i)\s*continue reading\s*$'
+  - '(?i)the post .* appeared first on .*$'
