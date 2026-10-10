@@ -28,6 +28,19 @@ services:
     volumes:
       - ingestion_models:/app/models
 
+  api:
+    build: ../apps/api
+    environment:
+      DATABASE_URL: postgresql://newstack:newstack@db:5432/newstack
+      WEB_ORIGIN: http://localhost:5173
+      PORT: "3000"
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   pgdata:
   ingestion_models:
