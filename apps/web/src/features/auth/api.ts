@@ -17,6 +17,18 @@ export async function login(email: string, password: string): Promise<void> {
   useAuthStore.getState().setSession(accessToken, { id: sub ?? '' })
 }
 
+// Revokes the server-side session (not just the local token) now that POST /auth/logout
+// exists — clears the local session regardless of whether the network call succeeds, since
+// the user's intent ("log out") is satisfied locally either way.
+export async function logout(): Promise<void> {
+  try {
+    await apiFetch('/auth/logout', { method: 'POST' })
+  } catch {
+    // Ignored — the local session is cleared below regardless.
+  }
+  useAuthStore.getState().clearSession()
+}
+
 export function requestPasswordReset(email: string): Promise<void> {
   return apiFetch('/auth/reset/request', { method: 'POST', body: { email } })
 }

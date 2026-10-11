@@ -67,6 +67,18 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  web:
+    build: ../apps/web
+    # No VITE_API_URL: Vite env vars are resolved at build time, not runtime, and
+    # apiClient.ts's default (http://localhost:3000) is already correct here — the browser
+    # calls the API directly on the host, never through the compose network, so the
+    # container-internal "api" hostname would be wrong even if set.
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    restart: unless-stopped
+
 volumes:
   pgdata:
   ingestion_models:

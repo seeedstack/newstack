@@ -1,10 +1,17 @@
-import { Link, Outlet } from 'react-router-dom'
+import { Link, Outlet, useNavigate } from 'react-router-dom'
 
+import { logout } from '../features/auth'
 import { useAuthStore } from '../lib/authStore'
 
 export function RootLayout() {
-  const { accessToken, clearSession } = useAuthStore()
+  const accessToken = useAuthStore((s) => s.accessToken)
   const isSignedIn = accessToken !== null
+  const navigate = useNavigate()
+
+  async function onLogout() {
+    await logout()
+    navigate('/')
+  }
 
   return (
     <div className="mx-auto flex min-h-screen max-w-3xl flex-col gap-6 px-4 py-6">
@@ -17,13 +24,7 @@ export function RootLayout() {
           {isSignedIn ? (
             <>
               <Link to="/me/saved" className="hover:underline">Saved</Link>
-              {/* Known gap, not papered over: there is no POST /auth/logout in apps/api, and
-                  the refresh cookie's Path=/auth/refresh (ARCHITECTURE §9, pinned) means a
-                  logout route couldn't read it to revoke the family even if added without
-                  also changing that path — a decision for whoever owns that pin, not this
-                  frontend pass. This clears the local access token only; the refresh session
-                  remains valid server-side until it expires (30 days) or is otherwise revoked. */}
-              <button type="button" onClick={() => clearSession()} className="hover:underline">
+              <button type="button" onClick={() => void onLogout()} className="hover:underline">
                 Log out
               </button>
             </>

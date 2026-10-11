@@ -1,0 +1,10 @@
+# Blindspot decision rule parameters (PRODUCT §4.4). These are starting values chosen for
+# precision, not yet proven on real Indian news coverage — PRODUCT §4.9: no blindspot flag
+# is shown publicly until a calibration round meets its release bars. A parameter change
+# ships only after being replayed against the labelled calibration set and beating these
+# values there (§4.9's outcome rules).
+n_min: 6                    # condition 1 — minimum counted sources to flag a side
+materiality: 0.5             # condition 2 — side's share must be <= materiality * its baseline share
+z: 1.645                     # Wilson upper-bound z (one-sided 95%) — condition 3
+baseline_window_days: 30     # §4.3 — baseline = share of (story, source) appearances over this window
+pool_cutover_appearances: 500 # §4.3 cold start — below this many appearances, use the pool baseline instead

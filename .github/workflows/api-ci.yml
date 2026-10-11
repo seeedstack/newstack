@@ -1,0 +1,95 @@
+name: api-ci
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/api/**"
+      - "infra/migrations/**"
+      - "infra/migrate.py"
+      - ".github/workflows/api-ci.yml"
+  pull_request:
+    paths:
+      - "apps/api/**"
+      - "infra/migrations/**"
+      - "infra/migrate.py"
+      - ".github/workflows/api-ci.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: newstack
+          POSTGRES_PASSWORD: newstack
+          POSTGRES_DB: newstack
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U newstack"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://newstack:newstack@localhost:5432/newstack
+      REDIS_URL: redis://localhost:6379
+      WEB_ORIGIN: http://localhost:5173
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: apps/api/package-lock.json
+
+      - name: Install dependencies
+        working-directory: apps/api
+        run: npm ci
+
+      # No lint tool configured for apps/api yet (ARCHITECTURE §12 wants lint -> type-check
+      # -> test -> build; this step is a placeholder for when one is added).
+      - name: Lint
+        working-directory: apps/api
+        run: echo "no lint tool configured for apps/api yet — skipping"
+
+      - name: Type-check
+        working-directory: apps/api
+        run: npx tsc --noEmit -p tsconfig.json
+
+      # Migrations are the only schema authority (ARCHITECTURE §12) — applied by the same
+      # Python script every environment uses, not a copy.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Apply migrations
+        run: |
+          pip install "psycopg[binary]"
+          python infra/migrate.py
+
+      - name: Test
+        working-directory: apps/api
+        run: npm test
+
+      - name: Build
+        working-directory: apps/api
+        run: npm run build
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      # No hosting target configured yet (mvp-todo.md "Hosting/domain topology" — needs a
+      # real Render/Railway/Fly.io account per ARCHITECTURE §2). Fill in here once one exists;
+      # the job is kept as a no-op placeholder so the pipeline shape matches §12 now.
+      - run: echo "deploy target not configured yet"

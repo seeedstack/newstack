@@ -1,0 +1,15 @@
+{
+  "name": "@newstack/shared-types",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TS types generated from docs/openapi.yaml (ARCHITECTURE §2/§12 — shared types come from the OpenAPI spec, never the DB schema).",
+  "type": "module",
+  "main": "src/openapi.ts",
+  "types": "src/openapi.ts",
+  "scripts": {
+    "generate": "openapi-typescript ../../docs/openapi.yaml -o src/openapi.ts"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.4.4"
+  }
+}
