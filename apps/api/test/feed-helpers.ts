@@ -10,7 +10,8 @@
 // (§11: "Content: sources, articles, stories, ratings — indefinite" retention) — fixtures are
 // real, permanent rows, so every call below generates its own unique domain/title/url instead
 // of trying to reuse or delete anything.
-import { getPool } from "../src/db.js";
+import type { Pool, PoolClient } from "pg";
+import { getPool, withTransaction } from "../src/db.js";
 
 const ZERO_VECTOR = `[${Array(384).fill(0).join(",")}]`;
 let counter = 0;
@@ -55,13 +56,14 @@ async function insertArticle(
     clusterVersion?: string;
     title?: string;
     contentHash?: string;
-  }
+  },
+  queryable: Pool | PoolClient = getPool()
 ): Promise<string> {
   const suffix = uniqueSuffix();
   const embedded = opts.storyId !== null; // I1: embedding/embedding_model/embedded_content_hash are null together
   const hiddenAt = opts.hiddenAt ?? null;
   const contentHash = opts.contentHash ?? `hash-${suffix}`;
-  const result = await getPool().query<{ id: string }>(
+  const result = await queryable.query<{ id: string }>(
     `INSERT INTO articles (
        source_id, title, url, canonical_url, canonicalization_version, content_hash,
        effective_at, first_scraped_at, embedding, embedding_model, embedded_content_hash,
@@ -92,29 +94,36 @@ export async function createTestStory(
 ): Promise<{ storyId: string; headlineArticleId: string }> {
   const clusterVersion = opts.clusterVersion ?? "test-v1";
   const effectiveAt = opts.lastCoverageAt ?? new Date();
-  const headlineArticleId = await insertArticle(sourceId, { storyId: null, effectiveAt });
 
-  const story = await getPool().query<{ id: string }>(
-    `INSERT INTO stories (
-       title, summary, headline_article_id, representative_embedding, representative_embedding_model,
-       cluster_version, status, first_seen_at, event_last_updated_at, last_coverage_at
-     ) VALUES ($1, 'test summary', $2, $3::vector, 'test-model', $4, 'active', $5, $5, $5)
-     RETURNING id`,
-    [opts.title ?? `Test story ${uniqueSuffix()}`, headlineArticleId, ZERO_VECTOR, clusterVersion, effectiveAt]
-  );
-  const storyId = story.rows[0].id;
+  // All three writes run in one transaction: a throw between steps (assertion failure,
+  // timeout) must not leave an orphaned article — stories can never be hard-deleted, so an
+  // article stuck with story_id/embedding null forever would permanently pollute the
+  // ingestion sweeper's "needs embedding" query across the whole shared dev DB.
+  return withTransaction(getPool(), async (client) => {
+    const headlineArticleId = await insertArticle(sourceId, { storyId: null, effectiveAt }, client);
 
-  // Must flip story_id and embedding/embedding_model/embedded_content_hash together — I1
-  // requires them null (or not) in lockstep, and before this the headline article had none.
-  await getPool().query(
-    `UPDATE articles
-     SET story_id = $1, cluster_version = $2, embedding = $3::vector,
-         embedding_model = 'test-model', embedded_content_hash = content_hash
-     WHERE id = $4`,
-    [storyId, clusterVersion, ZERO_VECTOR, headlineArticleId]
-  );
+    const story = await client.query<{ id: string }>(
+      `INSERT INTO stories (
+         title, summary, headline_article_id, representative_embedding, representative_embedding_model,
+         cluster_version, status, first_seen_at, event_last_updated_at, last_coverage_at
+       ) VALUES ($1, 'test summary', $2, $3::vector, 'test-model', $4, 'active', $5, $5, $5)
+       RETURNING id`,
+      [opts.title ?? `Test story ${uniqueSuffix()}`, headlineArticleId, ZERO_VECTOR, clusterVersion, effectiveAt]
+    );
+    const storyId = story.rows[0].id;
 
-  return { storyId, headlineArticleId };
+    // Must flip story_id and embedding/embedding_model/embedded_content_hash together — I1
+    // requires them null (or not) in lockstep, and before this the headline article had none.
+    await client.query(
+      `UPDATE articles
+       SET story_id = $1, cluster_version = $2, embedding = $3::vector,
+           embedding_model = 'test-model', embedded_content_hash = content_hash
+       WHERE id = $4`,
+      [storyId, clusterVersion, ZERO_VECTOR, headlineArticleId]
+    );
+
+    return { storyId, headlineArticleId };
+  });
 }
 
 // Adds another source's coverage to an existing story (for multi-source bias-bar tests).
