@@ -7,6 +7,8 @@ import {
   AuthError,
   confirmPasswordReset,
   login,
+  logout,
+  logoutAll,
   refresh as refreshSession,
   requestPasswordReset,
   signup,
@@ -18,7 +20,11 @@ import {
 import { hashToken } from "./tokens.js";
 
 const REFRESH_COOKIE = "refresh_token";
-const REFRESH_COOKIE_PATH = "/auth/refresh";
+// Covers /auth/refresh, /auth/logout and /auth/logout-all — all three need to read this
+// cookie. Widened from /auth/refresh (ARCHITECTURE §9, updated) the day logout was added:
+// a cookie scoped to one path is never sent on a request to a different one, regardless of
+// server-side routing.
+const REFRESH_COOKIE_PATH = "/auth";
 const REFRESH_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
 
 // Returns true when within limits (and the attempt is already counted). Sends 429 otherwise.
@@ -131,6 +137,20 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       }
       throw err;
     }
+  });
+
+  app.post("/logout", async (request, reply) => {
+    const presented = readCookie(request.headers.cookie, REFRESH_COOKIE);
+    await logout(getPool(), presented);
+    clearRefreshCookie(reply);
+    return reply.code(204).send();
+  });
+
+  app.post("/logout-all", async (request, reply) => {
+    const presented = readCookie(request.headers.cookie, REFRESH_COOKIE);
+    await logoutAll(getPool(), presented);
+    clearRefreshCookie(reply);
+    return reply.code(204).send();
   });
 
   app.post("/reset/request", async (request, reply) => {

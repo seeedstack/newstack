@@ -29,7 +29,9 @@ describe("POST /auth/login", () => {
 
     const cookie = res.headers["set-cookie"] as string;
     expect(cookie).toContain("refresh_token=");
-    expect(cookie).toContain("Path=/auth/refresh");
+    // §9: Path=/auth, not just /auth/refresh — the same cookie must also reach
+    // /auth/logout and /auth/logout-all.
+    expect(cookie).toContain("Path=/auth;");
     expect(cookie).toContain("HttpOnly");
     expect(cookie).toContain("SameSite=Strict");
     await app.close();

@@ -171,3 +171,11 @@ export async function revokeAllRefreshSessions(client: PoolClient, userId: strin
     [userId]
   );
 }
+
+// ───────────────────────── Logout / logout-all ─────────────────────────
+
+// "Log out everywhere" (§9): same auth_version bump as password change/reset, without
+// touching the password itself.
+export async function bumpAuthVersion(client: PoolClient, userId: string): Promise<void> {
+  await client.query("UPDATE users SET auth_version = auth_version + 1 WHERE id = $1", [userId]);
+}

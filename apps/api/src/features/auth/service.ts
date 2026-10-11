@@ -6,6 +6,7 @@ import { withTransaction } from "../../db.js";
 import { isCommonPassword } from "./common-passwords.js";
 import { signAccessToken } from "./jwt.js";
 import {
+  bumpAuthVersion,
   consumeEmailVerificationToken,
   consumePasswordResetToken,
   findUserForLogin,
@@ -224,5 +225,36 @@ export async function confirmPasswordReset(pool: Pool, token: string, newPasswor
     await invalidateOtherResetTokens(client, userId);
     await revokeAllRefreshSessions(client, userId);
     await insertAuthEvent(client, userId, "password_reset");
+  });
+}
+
+// ───────────────────────── Logout / logout-all ─────────────────────────
+
+// §10 idempotency table: "already revoked → 204" — an unknown, expired, or already-revoked
+// token is not an error, it's simply nothing left to revoke.
+export async function logout(pool: Pool, presentedToken: string | undefined): Promise<void> {
+  if (presentedToken === undefined) return;
+  const presentedHash = hashToken(presentedToken);
+  await withTransaction(pool, async (client) => {
+    const row = await selectRefreshSessionForUpdate(client, presentedHash);
+    if (row === null) return;
+    await revokeRefreshFamily(client, row.family_id);
+    await insertAuthEvent(client, row.user_id, "logout", { familyId: row.family_id });
+  });
+}
+
+// §10 idempotency table: "Bumps auth_version each call — harmless; 204". Also revokes every
+// refresh session (§9's "log out everywhere"), not just the presented one — otherwise a
+// bumped auth_version would stop short-lived access tokens but leave every device able to
+// mint fresh ones via /auth/refresh, which checks refresh_sessions, not auth_version.
+export async function logoutAll(pool: Pool, presentedToken: string | undefined): Promise<void> {
+  if (presentedToken === undefined) return;
+  const presentedHash = hashToken(presentedToken);
+  await withTransaction(pool, async (client) => {
+    const row = await selectRefreshSessionForUpdate(client, presentedHash);
+    if (row === null) return;
+    await bumpAuthVersion(client, row.user_id);
+    await revokeAllRefreshSessions(client, row.user_id);
+    await insertAuthEvent(client, row.user_id, "logout_all");
   });
 }
