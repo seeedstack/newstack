@@ -60,6 +60,8 @@ services:
     environment:
       DATABASE_URL: postgresql://newstack:newstack@db:5432/newstack
       WEB_ORIGIN: http://localhost:5173
+      # RESEND_API_KEY / MAIL_FROM: unset in dev on purpose — the mailer falls back to the
+      # console transport (src/mailer/index.ts). Set both in the real environment to send mail.
     depends_on:
       db:
         condition: service_healthy

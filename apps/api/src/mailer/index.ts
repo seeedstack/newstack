@@ -4,10 +4,21 @@
 import { getPool } from "../db.js";
 import { WEB_ORIGIN } from "../config.js";
 import { processOnce } from "./service.js";
-import { ConsoleMailTransport } from "./transport.js";
+import { ConsoleMailTransport, ResendMailTransport, type MailTransport } from "./transport.js";
 
 const TICK_MS = 10_000;
-const transport = new ConsoleMailTransport();
+
+// Dormant until real creds exist (complexity budget §1): no RESEND_API_KEY means dev/test,
+// so mail just goes to the console instead of failing to start.
+function buildTransport(): MailTransport {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (apiKey === undefined) return new ConsoleMailTransport();
+  const from = process.env.MAIL_FROM;
+  if (from === undefined) throw new Error("mailer: RESEND_API_KEY is set but MAIL_FROM is not");
+  return new ResendMailTransport(apiKey, from);
+}
+
+const transport = buildTransport();
 
 async function drain(): Promise<void> {
   while (await processOnce(getPool(), transport, WEB_ORIGIN)) {

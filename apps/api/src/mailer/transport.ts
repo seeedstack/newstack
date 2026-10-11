@@ -19,3 +19,25 @@ export class ConsoleMailTransport implements MailTransport {
     );
   }
 }
+
+// Resend over plain fetch — no SDK dependency for one POST call. Picked over Postmark/SES
+// because its REST API takes an `Idempotency-Key` header directly, matching §9's "provider's
+// idempotency key = outbox id" without any extra dedup bookkeeping on our side.
+export class ResendMailTransport implements MailTransport {
+  constructor(private readonly apiKey: string, private readonly from: string) {}
+
+  async send(message: MailMessage): Promise<void> {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        "Content-Type": "application/json",
+        "Idempotency-Key": message.idempotencyKey,
+      },
+      body: JSON.stringify({ from: this.from, to: message.to, subject: message.subject, text: message.body }),
+    });
+    if (!response.ok) {
+      throw new Error(`resend: ${response.status} ${await response.text()}`);
+    }
+  }
+}
