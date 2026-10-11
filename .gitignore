@@ -1,5 +1,6 @@
 *.DS_Store
 .idea/
+.vscode/
 
 docs/
 validation/
@@ -7,3 +8,27 @@ validation/
 .claude/
 
 CLAUDE.md
+
+# backend (Python)
+apps/ingestion/models/*.bin
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+
+# frontend (apps/web, not built yet but planned)
+node_modules/
+dist/
+build/
+.next/
+.turbo/
+*.local
+
+# env/secrets
+.env
+.env.*
+!.env.example

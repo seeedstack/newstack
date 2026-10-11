@@ -1,0 +1,14 @@
+extends:
+  - spectral:oas
+
+rules:
+  # ARCHITECTURE §10/§12: every timestamp (*At) and count (*Count) field needs a
+  # `description` — this is what keeps docs/openapi.yaml's pinned meanings from drifting.
+  timestamp-count-fields-need-description:
+    description: Every timestamp (*At) and count (*Count) field must have a description.
+    message: "'{{property}}' is a timestamp/count field and must have a `description` (ARCHITECTURE §10 pinned meanings)."
+    severity: error
+    given: "$.components.schemas.*.properties[?(@property.match(/(At|Count)$/))]"
+    then:
+      field: description
+      function: truthy

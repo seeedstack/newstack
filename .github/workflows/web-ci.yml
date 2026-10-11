@@ -1,0 +1,57 @@
+name: web-ci
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - ".github/workflows/web-ci.yml"
+  pull_request:
+    paths:
+      - "apps/web/**"
+      - ".github/workflows/web-ci.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Lint
+        working-directory: apps/web
+        run: npm run lint
+
+      - name: Type-check
+        working-directory: apps/web
+        run: npx tsc --noEmit -p tsconfig.app.json
+
+      - name: Test
+        working-directory: apps/web
+        run: npx vitest run
+
+      # Re-typechecks via `tsc -b` on the way to bundling — harmless overlap with the
+      # standalone type-check step above, which exists so a type error is caught before the
+      # (slower) test run, not after it.
+      - name: Build
+        working-directory: apps/web
+        run: npm run build
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      # No hosting target configured yet (mvp-todo.md "Hosting/domain topology" — needs a
+      # real Vercel/Netlify account per ARCHITECTURE §2). Fill in here once one exists; the
+      # job is kept as a no-op placeholder so the pipeline shape matches §12 now.
+      - run: echo "deploy target not configured yet"

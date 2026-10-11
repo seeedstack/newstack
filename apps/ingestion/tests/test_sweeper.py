@@ -46,24 +46,27 @@ def test_sweep_picks_never_attempted_article(source_id, monkeypatch):
     monkeypatch.setattr(sweeper, "process_article", lambda conn, **kw: calls.append(kw["article_id"]) or "CLUSTERED")
     with psycopg.connect(DSN) as conn:
         stats = sweeper.sweep(conn, denylist_patterns=[])
-    assert calls == [eligible]
-    assert stats == {"sweeper_picked": 1, "sweeper_succeeded": 1}
+    # sweep() scans the whole table, not just this fixture's source — a shared dev DB can
+    # carry other eligible rows (e.g. other suites' fixtures), so check membership, not
+    # exact equality. stats totals legitimately include whatever else was eligible.
+    assert eligible in calls
+    assert stats["sweeper_picked"] == len(calls)
+    assert stats["sweeper_succeeded"] == len(calls)
 
 
 def test_sweep_skips_article_still_in_backoff_window(source_id, monkeypatch):
-    _pending_article(source_id, "x.com/b", embed_attempts=1, last_attempt_minutes_ago=1)  # 2^1=2min backoff, 1<2
+    pending = _pending_article(source_id, "x.com/b", embed_attempts=1, last_attempt_minutes_ago=1)  # 2^1=2min, 1<2
     calls = []
     monkeypatch.setattr(sweeper, "process_article", lambda conn, **kw: calls.append(kw["article_id"]) or "CLUSTERED")
     with psycopg.connect(DSN) as conn:
-        stats = sweeper.sweep(conn, denylist_patterns=[])
-    assert calls == []
-    assert stats["sweeper_picked"] == 0
+        sweeper.sweep(conn, denylist_patterns=[])
+    assert pending not in calls
 
 
 def test_sweep_skips_gave_up_article(source_id, monkeypatch):
-    _pending_article(source_id, "x.com/c", embed_attempts=5)  # max_embed_attempts reached
+    gave_up = _pending_article(source_id, "x.com/c", embed_attempts=5)  # max_embed_attempts reached
     calls = []
     monkeypatch.setattr(sweeper, "process_article", lambda conn, **kw: calls.append(kw["article_id"]) or "CLUSTERED")
     with psycopg.connect(DSN) as conn:
-        stats = sweeper.sweep(conn, denylist_patterns=[])
-    assert calls == []
+        sweeper.sweep(conn, denylist_patterns=[])
+    assert gave_up not in calls

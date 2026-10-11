@@ -1,12 +1,17 @@
 from language import decide_skip_reason, detect_language
 
 
-class FakeModel:
+class FakeFastText:
     def __init__(self, label: str, confidence: float):
         self.label, self.confidence = label, confidence
 
-    def predict(self, text, k=1):
-        return ([f"__label__{self.label}"], [self.confidence])
+    def predict(self, text, k, threshold, on_unicode_error):
+        return [(self.confidence, f"__label__{self.label}")]
+
+
+class FakeModel:
+    def __init__(self, label: str, confidence: float):
+        self.f = FakeFastText(label, confidence)
 
 
 def test_short_text_uses_source_language():
