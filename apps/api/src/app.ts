@@ -4,11 +4,13 @@ import Fastify, { type FastifyInstance } from "fastify";
 
 import { WEB_ORIGIN } from "./config.js";
 import { authRoutes } from "./features/auth/routes.js";
+import { blindspotCuratorRoutes } from "./features/blindspot/routes.js";
 import { curatorRoutes } from "./features/curator/routes.js";
 import { feedRoutes } from "./features/feed/routes.js";
 import { storyRoutes } from "./features/story/routes.js";
 import { ratingCuratorRoutes, ratingPublicRoutes } from "./features/rating/routes.js";
 import { savedRoutes } from "./features/saved/routes.js";
+import { sourceRoutes } from "./features/source/routes.js";
 import { topicRoutes } from "./features/topic/routes.js";
 import { authPlugin } from "./plugins/auth.js";
 import { cachePlugin } from "./plugins/cache.js";
@@ -64,6 +66,23 @@ export function buildApp(): FastifyInstance {
     return payload;
   });
 
+  // CORS preflight: a browser sends an OPTIONS request before any cross-origin request
+  // carrying a non-simple header (every JSON POST/PUT/DELETE here sets Content-Type:
+  // application/json, which alone makes it non-simple) or a custom header (Authorization,
+  // X-Curator-Key). Without an explicit 2xx answer here the browser blocks the real request
+  // before it's ever sent — this app hand-rolls its CORS headers elsewhere (no @fastify/cors
+  // dependency), so the preflight needs the same treatment. Unauthenticated by design: the
+  // preflight carries no credentials for a hook to check.
+  app.options("*", async (_request, reply) => {
+    reply
+      .header("Access-Control-Allow-Origin", WEB_ORIGIN)
+      .header("Access-Control-Allow-Credentials", "true")
+      .header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS")
+      .header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Curator-Key")
+      .code(204)
+      .send();
+  });
+
   app.get("/health", async () => ({ status: "ok" }));
 
   // /auth/* — neither plugin; CSRF checks and rate limits only (rate limits: inside authRoutes).
@@ -79,6 +98,7 @@ export function buildApp(): FastifyInstance {
     await storyRoutes(publicScope);
     await topicRoutes(publicScope);
     await ratingPublicRoutes(publicScope);
+    await sourceRoutes(publicScope);
   }, { prefix: "/api/public" });
 
   // /api/* — auth plugin, no cache plugin. Same direct-call reasoning as above.
@@ -95,6 +115,7 @@ export function buildApp(): FastifyInstance {
     await curatorPlugin(curatorScope);
     await ratingCuratorRoutes(curatorScope);
     await curatorRoutes(curatorScope);
+    await blindspotCuratorRoutes(curatorScope);
   }, { prefix: "/api/curator" });
 
   return app;

@@ -22,9 +22,10 @@ export interface BlindspotResponse {
   nextCursor: string | null;
 }
 
-// PRODUCT §4.9: not registered as a public route — no calibration round has run yet, so no
-// blindspot flag may be shown publicly. This is the mechanism, built dormant, same pattern as
-// every other "designed now, built when its trigger fires" item in the complexity budget.
+// PRODUCT §4.9: registered curator-only (routes.ts) — no calibration round has run yet, so
+// no blindspot flag may be shown publicly. Promoting this to /api/public/* is the trigger-fire
+// moment §4.9 describes, same pattern as every other "designed now, built when its trigger
+// fires" item in the complexity budget.
 export async function getBlindspotFeed(pool: Pool, cursorRaw: string | undefined): Promise<BlindspotResponse> {
   const cursor = cursorRaw === undefined ? null : decodeCursor(cursorRaw, FEED_NAME);
   const asOf = cursor === null ? new Date() : new Date(cursor.as_of);

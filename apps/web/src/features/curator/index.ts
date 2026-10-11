@@ -1,0 +1,1 @@
+export { curatorRoutes } from './routes'

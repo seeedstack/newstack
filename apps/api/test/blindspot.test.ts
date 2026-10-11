@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 
+import { buildApp } from "../src/app.js";
 import { getPool } from "../src/db.js";
 import { getBlindspotFeed } from "../src/features/blindspot/service.js";
 import { addCoverage, createTestSource, createTestStory, rateSource } from "./feed-helpers.js";
 
 const BASELINE = { pLeft: 0.3, pCenter: 0.35, pRight: 0.35 };
+const CURATOR_KEY = "dev-insecure-curator-key";
 
 async function insertBaseline(asOf: Date = new Date()): Promise<void> {
   await getPool().query(
@@ -91,5 +93,33 @@ describe("getBlindspotFeed (PRODUCT §4)", () => {
 
     const result = await getBlindspotFeed(getPool(), undefined);
     expect(result.items.find((i) => i.id === storyId)).toBeUndefined();
+  });
+});
+
+describe("GET /api/curator/blindspot-feed", () => {
+  it("rejects requests without the curator key", async () => {
+    const app = buildApp();
+    const res = await app.inject({ method: "GET", url: "/api/curator/blindspot-feed" });
+    expect(res.statusCode).toBe(401);
+    await app.close();
+  });
+
+  it("serves the same feed the service computes, behind the curator key", async () => {
+    await insertBaseline();
+    const sources = await Promise.all(Array.from({ length: 6 }, () => createTestSource("blindspot-route")));
+    await Promise.all(sources.map((s) => rateSource(s, { biasRating: "left", confidence: "high" })));
+    const { storyId } = await createTestStory(sources[0]);
+    await Promise.all(sources.slice(1).map((s) => addCoverage(storyId, s)));
+
+    const app = buildApp();
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/curator/blindspot-feed",
+      headers: { "x-curator-key": CURATOR_KEY },
+    });
+    expect(res.statusCode).toBe(200);
+    const item = res.json().items.find((i: { id: string }) => i.id === storyId);
+    expect(item?.side).toBe("R");
+    await app.close();
   });
 });

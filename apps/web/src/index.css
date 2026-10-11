@@ -1,0 +1,32 @@
+@import 'tailwindcss';
+
+/*
+ * Bias spectrum ramp (ARCHITECTURE §10: "one diverging 5-step colour scale
+ * everywhere", fixed order left|center-left|center|center-right|right).
+ * Diverging ramps are checked for lightness monotonicity per arm, not run
+ * through the categorical CVD validator (dataviz skill, color-formula.md
+ * "Scope" note) — poles reuse the skill's default blue/red diverging pair.
+ */
+@theme {
+  --color-bias-left: #184f95;
+  --color-bias-centerleft: #86b6ef;
+  --color-bias-center: #c3c2b7;
+  --color-bias-centerright: #f3b6ae;
+  --color-bias-right: #c23b3a;
+  --color-bias-unrated: #e1e0d9;
+}
+
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-bias-left: #3987e5;
+    --color-bias-centerleft: #104281;
+    --color-bias-center: #383835;
+    --color-bias-centerright: #7a2f2b;
+    --color-bias-right: #e66767;
+    --color-bias-unrated: #2c2c2a;
+  }
+}
+
+html {
+  color-scheme: light dark;
+}
