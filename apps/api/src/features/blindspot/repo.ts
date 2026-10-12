@@ -1,5 +1,7 @@
 import type { Pool } from "pg";
 
+import type { BlindspotParams } from "./config.js";
+
 export interface Baseline {
   p_left: number;
   p_center: number;
@@ -30,7 +32,13 @@ export interface BlindspotRow {
 // binds them): stories active in the last 7 days, newest coverage first.
 export async function fetchBlindspotPage(
   pool: Pool,
-  args: { asOf: Date; cursorCoverageAt: Date | null; cursorId: string | null; limit: number }
+  args: {
+    asOf: Date;
+    cursorCoverageAt: Date | null;
+    cursorId: string | null;
+    limit: number;
+    params: BlindspotParams;
+  }
 ): Promise<BlindspotRow[]> {
   const result = await pool.query<{
     id: string;
@@ -60,7 +68,8 @@ export async function fetchBlindspotPage(
        GROUP BY a.story_id),
      flagged AS (
        SELECT c.*, blindspot_side(c.k_left::int, c.k_center::int, c.k_right::int,
-                                  b.p_left, b.p_center, b.p_right) AS side
+                                  b.p_left, b.p_center, b.p_right,
+                                  $5::int, $6::float8, $7::float8) AS side
        FROM counts c CROSS JOIN base b)
      SELECT s.id, s.title, s.last_coverage_at, f.side, f.k_left, f.k_center, f.k_right
      FROM flagged f JOIN stories s ON s.id = f.story_id
@@ -68,7 +77,8 @@ export async function fetchBlindspotPage(
        AND ($2::timestamptz IS NULL OR (s.last_coverage_at, s.id) < ($2, $3))
      ORDER BY s.last_coverage_at DESC, s.id DESC
      LIMIT $4`,
-    [args.asOf, args.cursorCoverageAt, args.cursorId, args.limit]
+    [args.asOf, args.cursorCoverageAt, args.cursorId, args.limit,
+     args.params.nMin, args.params.materiality, args.params.z]
   );
   return result.rows.map((r) => ({
     ...r,

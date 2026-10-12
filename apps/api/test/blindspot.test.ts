@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { buildApp } from "../src/app.js";
 import { getPool } from "../src/db.js";
+import { loadBlindspotConfig } from "../src/features/blindspot/config.js";
+import { fetchBlindspotPage } from "../src/features/blindspot/repo.js";
 import { getBlindspotFeed } from "../src/features/blindspot/service.js";
 import { addCoverage, createTestSource, createTestStory, rateSource } from "./feed-helpers.js";
 
@@ -43,6 +45,30 @@ describe("getBlindspotFeed (PRODUCT §4)", () => {
 
     const result = await getBlindspotFeed(getPool(), undefined);
     expect(result.items.find((i) => i.id === storyId)).toBeUndefined();
+  });
+
+  it("n_min/materiality/z are actually read from config/product/blindspot.yaml, not a silently "
+    + "ignored argument or a hardcoded SQL default", async () => {
+    await insertBaseline();
+    // Same minimal 6-source flag as the first test above, which passes at the real n_min (6).
+    const sources = await Promise.all(Array.from({ length: 6 }, () => createTestSource("blindspot-cfgwire")));
+    await Promise.all(sources.map((s) => rateSource(s, { biasRating: "left", confidence: "high" })));
+    const { storyId } = await createTestStory(sources[0]);
+    await Promise.all(sources.slice(1).map((s) => addCoverage(storyId, s)));
+
+    const real = loadBlindspotConfig();
+    const flagsAtRealNMin = await fetchBlindspotPage(getPool(), {
+      asOf: new Date(), cursorCoverageAt: null, cursorId: null, limit: 50, params: real,
+    });
+    expect(flagsAtRealNMin.some((r) => r.id === storyId)).toBe(true);
+
+    // Raising n_min by 1 past this story's count must suppress the flag -- if the SQL were
+    // still using its own DEFAULT (6) instead of this bound parameter, it would stay flagged.
+    const stricter = { ...real, nMin: real.nMin + 1 };
+    const flagsAtStricterNMin = await fetchBlindspotPage(getPool(), {
+      asOf: new Date(), cursorCoverageAt: null, cursorId: null, limit: 50, params: stricter,
+    });
+    expect(flagsAtStricterNMin.some((r) => r.id === storyId)).toBe(false);
   });
 
   it("does not flag balanced coverage (no side is one-sided)", async () => {

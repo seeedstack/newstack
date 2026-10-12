@@ -9,6 +9,7 @@ CONFIG_ROOT = pathlib.Path(__file__).resolve().parents[2] / "config"
 CLUSTERING_DIR = CONFIG_ROOT / "clustering"
 EMBED_INPUT_DIR = CONFIG_ROOT / "embed_input"
 SOURCES_DIR = CONFIG_ROOT / "sources"
+PRODUCT_DIR = CONFIG_ROOT / "product"
 
 
 def load_clustering_config(version: str = "v1") -> dict:
@@ -32,3 +33,10 @@ def load_source_adapter(adapter: str) -> dict:
             overrides = yaml.safe_load(f) or {}
         merged.update(overrides)
     return merged
+
+
+def load_blindspot_config() -> dict:
+    """PRODUCT §4.4's pinned decision-rule parameters. A change ships only after beating the
+    §4.9 calibration set with the new values -- never hand-edit code to tune these."""
+    with open(PRODUCT_DIR / "blindspot.yaml", encoding="utf-8") as f:
+        return yaml.safe_load(f)
