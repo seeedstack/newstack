@@ -1,8 +1,11 @@
 """Daily blindspot baseline (PRODUCT §4.3). Verbatim from the doc — the cold-start
-pool/appearances split and the 500-appearance cutover are policy, not reimplemented here."""
+pool/appearances split and the 500-appearance cutover are policy, read from
+config/product/blindspot.yaml, not hardcoded here."""
 from __future__ import annotations
 
 import psycopg
+
+from config import load_blindspot_config
 
 BASELINE_SQL = """
 INSERT INTO bias_baselines (spectrum, method, appearances, p_left, p_center, p_right)
@@ -14,7 +17,7 @@ WITH app AS (
   JOIN stories s ON s.id = a.story_id AND s.status = 'active' AND s.hidden_at IS NULL
   JOIN source_ratings r ON r.source_id = a.source_id AND r.superseded_at IS NULL
   WHERE a.hidden_at IS NULL AND r.spectrum = 'IN' AND r.confidence <> 'low'
-    AND a.coverage_at >= now() - interval '30 days'),
+    AND a.coverage_at >= now() - (%(baseline_window_days)s * interval '1 day')),
 pool AS (
   SELECT CASE WHEN r.bias_rating IN ('left','center-left') THEN 'L'
               WHEN r.bias_rating = 'center' THEN 'C' ELSE 'R' END AS side
@@ -22,7 +25,8 @@ pool AS (
   JOIN source_ratings r ON r.source_id = src.id AND r.superseded_at IS NULL
   WHERE src.status = 'active' AND r.spectrum = 'IN' AND r.confidence <> 'low'),
 pick AS (
-  SELECT CASE WHEN (SELECT count(*) FROM app) >= 500 THEN 'appearances' ELSE 'pool' END AS method),
+  SELECT CASE WHEN (SELECT count(*) FROM app) >= %(pool_cutover_appearances)s THEN 'appearances'
+              ELSE 'pool' END AS method),
 chosen AS (
   SELECT side FROM app  WHERE (SELECT method FROM pick) = 'appearances'
   UNION ALL
@@ -35,9 +39,12 @@ RETURNING method, appearances, p_left, p_center, p_right
 """
 
 
-def run(conn: psycopg.Connection) -> dict | None:
+def run(conn: psycopg.Connection, config: dict | None = None) -> dict | None:
+    config = config or load_blindspot_config()
+    params = {"baseline_window_days": config["baseline_window_days"],
+              "pool_cutover_appearances": config["pool_cutover_appearances"]}
     with conn.transaction():
-        row = conn.execute(BASELINE_SQL).fetchone()
+        row = conn.execute(BASELINE_SQL, params).fetchone()
     if row is None:
         return None
     method, appearances, p_left, p_center, p_right = row

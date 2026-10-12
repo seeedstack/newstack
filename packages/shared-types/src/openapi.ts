@@ -172,10 +172,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": {
-                            /** @description 15-minute JWT carrying `sub` (user id), `av` (auth_version), `kid`. */
-                            accessToken?: string;
-                        };
+                        "application/json": components["schemas"]["LoginResponse"];
                     };
                 };
                 401: components["responses"]["AuthError"];
@@ -1276,185 +1273,189 @@ export interface components {
         Error: {
             error?: string;
         };
+        LoginResponse: {
+            /** @description 15-minute JWT carrying `sub` (user id), `av` (auth_version), `kid`. */
+            accessToken: string;
+        };
         BiasBarSegment: {
             /** @description Distinct rated sources in this bias category that covered the story with a visible article. */
-            count?: number;
+            count: number;
             /** @description Subset of `count` whose current rating has low confidence — shown hatched on the bar, never excluded from `count` (ARCHITECTURE §10 bias bar). */
-            lowConfidenceCount?: number;
+            lowConfidenceCount: number;
         };
         /** @description 6 buckets — the 5 bias categories plus `notRated` (PRODUCT §3.3). */
         BiasBar: {
-            left?: components["schemas"]["BiasBarSegment"];
-            centerLeft?: components["schemas"]["BiasBarSegment"];
-            center?: components["schemas"]["BiasBarSegment"];
-            centerRight?: components["schemas"]["BiasBarSegment"];
-            right?: components["schemas"]["BiasBarSegment"];
-            notRated?: components["schemas"]["BiasBarSegment"];
+            left: components["schemas"]["BiasBarSegment"];
+            centerLeft: components["schemas"]["BiasBarSegment"];
+            center: components["schemas"]["BiasBarSegment"];
+            centerRight: components["schemas"]["BiasBarSegment"];
+            right: components["schemas"]["BiasBarSegment"];
+            notRated: components["schemas"]["BiasBarSegment"];
         };
         FeedItem: {
             /** Format: uuid */
-            id?: string;
-            title?: string;
-            summary?: string | null;
+            id: string;
+            title: string;
+            summary: string | null;
             /**
              * Format: date-time
              * @description When fresh coverage last joined the story — not publication or event time (ARCHITECTURE §10 pinned meanings).
              */
-            lastCoverageAt?: string;
+            lastCoverageAt: string;
             /** @description Distinct sources with a current rating and a visible article in the story. */
-            ratedSourceCount?: number;
+            ratedSourceCount: number;
             /** @description Distinct sources with a visible article and no current rating. */
-            unratedSourceCount?: number;
-            biasBar?: components["schemas"]["BiasBar"];
+            unratedSourceCount: number;
+            biasBar: components["schemas"]["BiasBar"];
         };
         FeedResponse: {
-            items?: components["schemas"]["FeedItem"][];
+            items: components["schemas"]["FeedItem"][];
             /**
              * Format: date-time
              * @description The frozen upper bound this page was read against. Clients never compute or adjust this themselves — it round-trips inside `nextCursor` and is only used to phrase the "N updated" banner.
              */
-            asOf?: string;
+            asOf: string;
             /** @description Opaque cursor for the next page, or null at the end of the feed. */
-            nextCursor?: string | null;
+            nextCursor: string | null;
             /** @description Stories with coverage newer than `asOf` that exist right now — drives the "N stories updated, refresh" banner (ARCHITECTURE §10). Not a count of items on this page. */
-            updatedCount?: number;
+            updatedCount: number;
         };
         SourceCard: {
             /** Format: uuid */
-            sourceId?: string;
-            sourceName?: string;
-            primaryArticle?: {
+            sourceId: string;
+            sourceName: string;
+            primaryArticle: {
                 /** Format: uuid */
-                id?: string;
-                title?: string;
+                id: string;
+                title: string;
                 /** Format: uri */
-                url?: string;
+                url: string;
                 /**
                  * Format: date-time
                  * @description The article's effective time — the publisher's date, clamped to when we first saw it (ARCHITECTURE §10 pinned meanings).
                  */
-                publishedAt?: string | null;
+                publishedAt: string | null;
             };
             /** @description Additional visible articles from this source beyond the primary card, after collapsing duplicates that share a `content_hash` (ARCHITECTURE §10 story detail). */
-            moreCount?: number;
+            moreCount: number;
         };
         /** @description Per-source cards grouped into the 5 bias categories plus `notRated`. */
         BiasColumns: {
-            left?: components["schemas"]["SourceCard"][];
-            centerLeft?: components["schemas"]["SourceCard"][];
-            center?: components["schemas"]["SourceCard"][];
-            centerRight?: components["schemas"]["SourceCard"][];
-            right?: components["schemas"]["SourceCard"][];
-            notRated?: components["schemas"]["SourceCard"][];
+            left: components["schemas"]["SourceCard"][];
+            centerLeft: components["schemas"]["SourceCard"][];
+            center: components["schemas"]["SourceCard"][];
+            centerRight: components["schemas"]["SourceCard"][];
+            right: components["schemas"]["SourceCard"][];
+            notRated: components["schemas"]["SourceCard"][];
         };
         StoryDetailResponse: {
             /** Format: uuid */
-            id?: string;
-            title?: string;
-            summary?: string | null;
+            id: string;
+            title: string;
+            summary: string | null;
             /** @enum {string} */
-            status?: "building" | "active" | "tombstoned";
+            status: "building" | "active" | "tombstoned";
             /** @description Set only when `status` is `tombstoned` and the story was merged into a successor. */
-            redirectTo?: {
+            redirectTo: {
                 /** Format: uuid */
-                id?: string;
-                title?: string;
+                id: string;
+                title: string;
             } | null;
-            splitNotices?: {
+            splitNotices: {
                 /** Format: uuid */
-                storyId?: string;
-                title?: string;
+                storyId: string;
+                title: string;
                 /** @description Number of articles that moved to this split-off story. */
-                articleCount?: number;
+                articleCount: number;
             }[];
             /** @description Distinct sources with a current rating and a visible article in the story. */
-            ratedSourceCount?: number;
+            ratedSourceCount: number;
             /** @description Distinct sources with a visible article and no current rating. */
-            unratedSourceCount?: number;
-            biasColumns?: components["schemas"]["BiasColumns"];
+            unratedSourceCount: number;
+            biasColumns: components["schemas"]["BiasColumns"];
         };
         Source: {
             /** Format: uuid */
-            id?: string;
-            name?: string;
-            domain?: string;
+            id: string;
+            name: string;
+            domain: string;
             /** @enum {string} */
-            status?: "active" | "deprecated";
+            status: "active" | "deprecated";
             /**
              * Format: date-time
              * @description When this source stopped being polled — its past stories still match follows (PRODUCT §7.2 "no longer updated" badge).
              */
-            deprecatedAt?: string | null;
-            logoUrl?: string | null;
+            deprecatedAt: string | null;
+            logoUrl: string | null;
         };
         BlindspotItem: {
             /** Format: uuid */
-            id?: string;
-            title?: string;
+            id: string;
+            title: string;
             /**
              * Format: date-time
              * @description When fresh coverage last joined the story — not publication or event time (ARCHITECTURE §10 pinned meanings).
              */
-            lastCoverageAt?: string;
+            lastCoverageAt: string;
             /**
              * @description The side with little coverage (PRODUCT §4.7 — never phrased as the covering side's fault).
              * @enum {string}
              */
-            side?: "L" | "R";
+            side: "L" | "R";
             /** @description Distinct left-leaning sources counted toward this story's blindspot test (PRODUCT §4.2). */
-            countedLeft?: number;
+            countedLeft: number;
             /** @description Distinct center sources counted toward this story's blindspot test (PRODUCT §4.2). */
-            countedCenter?: number;
+            countedCenter: number;
             /** @description Distinct right-leaning sources counted toward this story's blindspot test (PRODUCT §4.2). */
-            countedRight?: number;
+            countedRight: number;
         };
         BlindspotFeedResponse: {
-            items?: components["schemas"]["BlindspotItem"][];
+            items: components["schemas"]["BlindspotItem"][];
             /**
              * Format: date-time
              * @description The frozen upper bound this page was read against (ARCHITECTURE §10 cursor mechanics).
              */
-            asOf?: string;
+            asOf: string;
             /** @description Opaque cursor for the next page, or null at the end of the feed. */
-            nextCursor?: string | null;
+            nextCursor: string | null;
         };
         Topic: {
             /** Format: uuid */
-            id?: string;
-            name?: string;
+            id: string;
+            name: string;
             /** @description Already normalized (NFC, casefolded, deduped) — see POST /api/curator/topics. */
-            keywords?: string[];
+            keywords: string[];
         };
         Rating: {
             /** Format: uuid */
-            id?: string;
+            id: string;
             /** Format: uuid */
-            sourceId?: string;
+            sourceId: string;
             /** @enum {string|null} */
-            spectrum?: "IN" | null;
+            spectrum: "IN" | null;
             /** @enum {string|null} */
-            biasRating?: "left" | "center-left" | "center" | "center-right" | "right" | null;
+            biasRating: "left" | "center-left" | "center" | "center-right" | "right" | null;
             /** @enum {string} */
-            factuality?: "high" | "mixed" | "low";
+            factuality: "high" | "mixed" | "low";
             /** @enum {string|null} */
-            confidence?: "high" | "medium" | "low" | null;
-            method?: string;
-            ratedBy?: string;
+            confidence: "high" | "medium" | "low" | null;
+            method: string;
+            ratedBy: string;
             /**
              * Format: date-time
              * @description When this rating row was inserted — ratings are append-only, never mutated in place.
              */
-            ratedAt?: string;
+            ratedAt: string;
             /**
              * Format: uuid
              * @description Id of the rating row this one replaced, or null if this is the source's first rating.
              */
-            supersedes?: string | null;
+            supersedes: string | null;
             /**
              * Format: date-time
              * @description When a later rating replaced this one; null while this is the current rating.
              */
-            supersededAt?: string | null;
+            supersededAt: string | null;
         };
         NewRating: {
             /**

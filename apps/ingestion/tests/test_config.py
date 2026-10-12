@@ -21,6 +21,15 @@ def test_load_source_adapter_falls_back_to_generic():
     assert cfg["date_fields"] == ["published", "updated"]
 
 
+def test_load_blindspot_config_has_required_keys():
+    cfg = config.load_blindspot_config()
+    assert cfg["n_min"] == 6
+    assert cfg["materiality"] == 0.5
+    assert cfg["z"] == 1.645
+    assert cfg["baseline_window_days"] == 30
+    assert cfg["pool_cutover_appearances"] == 500
+
+
 def test_load_source_adapter_merges_override(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "SOURCES_DIR", tmp_path)
     (tmp_path / "generic.yaml").write_text(

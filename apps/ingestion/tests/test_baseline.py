@@ -36,3 +36,30 @@ def test_run_uses_pool_method_under_500_appearances():
         result = baseline.run(conn)
     assert result["method"] == "pool"  # far under the 500-appearances cutover
     assert result["appearances"] == 0  # no article coverage yet, only the rated-source pool
+
+
+def test_run_passes_config_values_as_query_params_not_hardcoded():
+    """Proves baseline_window_days/pool_cutover_appearances are read from the passed config and
+    bound as query parameters, not hardcoded SQL literals -- catches a regression to the old
+    `interval '30 days'` / `>= 500` literals even without a full article/story fixture."""
+    assert "%(baseline_window_days)s" in baseline.BASELINE_SQL
+    assert "%(pool_cutover_appearances)s" in baseline.BASELINE_SQL
+    assert "30 days" not in baseline.BASELINE_SQL
+    assert ">= 500" not in baseline.BASELINE_SQL
+
+    captured = {}
+    real_execute = psycopg.Connection.execute
+
+    def spy_execute(self, query, params=None, **kwargs):
+        if params is not None:
+            captured.update(params)
+        return real_execute(self, query, params, **kwargs)
+
+    with psycopg.connect(DSN, autocommit=True) as conn:
+        conn.execute("DELETE FROM bias_baselines")
+        conn.execute("DELETE FROM source_ratings")
+    with psycopg.connect(DSN) as conn:
+        conn.execute = spy_execute.__get__(conn, psycopg.Connection)
+        baseline.run(conn, config={"baseline_window_days": 7, "pool_cutover_appearances": 42})
+    assert captured["baseline_window_days"] == 7
+    assert captured["pool_cutover_appearances"] == 42

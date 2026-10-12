@@ -1,58 +1,12 @@
-export interface BiasBarSegment {
-  count: number
-  lowConfidenceCount: number
-}
+// Re-exported from the OpenAPI spec (docs/openapi.yaml, generated into
+// packages/shared-types) rather than hand-duplicated, so a schema change can't silently
+// drift from what this feature assumes the API returns.
+import type { components } from '../../../../../packages/shared-types/src/openapi'
 
-export interface BiasBar {
-  left: BiasBarSegment
-  centerLeft: BiasBarSegment
-  center: BiasBarSegment
-  centerRight: BiasBarSegment
-  right: BiasBarSegment
-  notRated: BiasBarSegment
-}
-
-export interface FeedItem {
-  id: string
-  title: string
-  summary: string | null
-  lastCoverageAt: string
-  ratedSourceCount: number
-  unratedSourceCount: number
-  biasBar: BiasBar
-}
-
-export interface FeedResponse {
-  items: FeedItem[]
-  asOf: string
-  nextCursor: string | null
-  updatedCount: number
-}
-
-export interface SourceCard {
-  sourceId: string
-  sourceName: string
-  primaryArticle: { id: string; title: string; url: string; publishedAt: string | null }
-  moreCount: number
-}
-
-export interface BiasColumns {
-  left: SourceCard[]
-  centerLeft: SourceCard[]
-  center: SourceCard[]
-  centerRight: SourceCard[]
-  right: SourceCard[]
-  notRated: SourceCard[]
-}
-
-export interface StoryDetail {
-  id: string
-  title: string
-  summary: string | null
-  status: 'building' | 'active' | 'tombstoned'
-  redirectTo: { id: string; title: string } | null
-  splitNotices: { storyId: string; title: string; articleCount: number }[]
-  ratedSourceCount: number
-  unratedSourceCount: number
-  biasColumns: BiasColumns
-}
+export type BiasBarSegment = components['schemas']['BiasBarSegment']
+export type BiasBar = components['schemas']['BiasBar']
+export type FeedItem = components['schemas']['FeedItem']
+export type FeedResponse = components['schemas']['FeedResponse']
+export type SourceCard = components['schemas']['SourceCard']
+export type BiasColumns = components['schemas']['BiasColumns']
+export type StoryDetail = components['schemas']['StoryDetailResponse']
