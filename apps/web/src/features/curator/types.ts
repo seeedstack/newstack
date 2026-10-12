@@ -39,18 +39,12 @@ export interface NewClusterReport {
   reportedBy: string
 }
 
-export interface BlindspotItem {
-  id: string
-  title: string
-  lastCoverageAt: string
-  side: 'L' | 'R'
-  countedLeft: number
-  countedCenter: number
-  countedRight: number
-}
+// Re-exported from the OpenAPI spec (docs/openapi.yaml, generated into packages/shared-types)
+// rather than hand-duplicated. NewSource/NewRating/NewClusterReport above stay hand-written:
+// NewRating.rubricScores is genuinely free-form JSON, which openapi-typescript renders as
+// Record<string, never> (an object that can hold no properties) instead of the usable
+// Record<string, unknown> this feature actually needs.
+import type { components } from '../../../../../packages/shared-types/src/openapi'
 
-export interface BlindspotFeedResponse {
-  items: BlindspotItem[]
-  asOf: string
-  nextCursor: string | null
-}
+export type BlindspotItem = components['schemas']['BlindspotItem']
+export type BlindspotFeedResponse = components['schemas']['BlindspotFeedResponse']
