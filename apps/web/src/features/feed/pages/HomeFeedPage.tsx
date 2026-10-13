@@ -13,9 +13,9 @@ export function HomeFeedPage() {
   const updatedCount = data?.pages[0]?.updatedCount ?? 0
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Latest</h1>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <h1>Latest</h1>
         <BiasBarLegend />
       </div>
 
@@ -23,7 +23,8 @@ export function HomeFeedPage() {
         <button
           type="button"
           onClick={() => refetch()}
-          className="rounded bg-blue-50 px-3 py-2 text-left text-sm text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300"
+          className="p-3 text-left text-sm"
+          style={{ background: 'var(--color-accent-100)', color: 'var(--color-accent-800)' }}
         >
           {updatedCount} {updatedCount === 1 ? 'story' : 'stories'} updated — refresh
         </button>
@@ -32,7 +33,11 @@ export function HomeFeedPage() {
       {items.length === 0 ? (
         <EmptyState message="No stories yet." />
       ) : (
-        items.map((item) => <FeedItemCard key={item.id} item={item} />)
+        <div className="grid grid-cols-1 gap-0.5 sm:grid-cols-2 lg:grid-cols-3" style={{ background: 'var(--color-divider)', border: '2px solid var(--color-divider)' }}>
+          {items.map((item) => (
+            <FeedItemCard key={item.id} item={item} />
+          ))}
+        </div>
       )}
 
       {hasNextPage && <LoadMoreButton onClick={() => fetchNextPage()} loading={isFetchingNextPage} />}

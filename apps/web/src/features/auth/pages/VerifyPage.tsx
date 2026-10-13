@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { useVerifyEmail } from '../hooks/useAuthMutations'
 import { readTokenFromHash } from '../utils/hashToken'
+import { AuthCard } from '../components/AuthCard'
 
 export function VerifyPage() {
   const verify = useVerifyEmail()
@@ -20,14 +21,16 @@ export function VerifyPage() {
 
   const token = readTokenFromHash(window.location.hash)
 
-  if (token === null) return <p className="text-sm">Missing verification link.</p>
-  if (verify.isPending || verify.isIdle) return <p className="text-sm">Verifying…</p>
+  if (token === null) return <AuthCard title="Verify email"><p className="text-sm">Missing verification link.</p></AuthCard>
+  if (verify.isPending || verify.isIdle) return <AuthCard title="Verify email"><p className="text-sm">Verifying…</p></AuthCard>
   if (verify.isSuccess) {
     return (
-      <p className="text-sm">
-        Email verified. <Link to="/login" className="underline">Log in</Link>
-      </p>
+      <AuthCard title="Email verified">
+        <p className="text-sm">
+          <Link to="/login" style={{ color: 'var(--color-accent)' }}>Log in</Link>
+        </p>
+      </AuthCard>
     )
   }
-  return <p className="text-sm text-red-700 dark:text-red-400">That link is invalid or expired.</p>
+  return <AuthCard title="Verify email"><p className="text-sm" style={{ color: 'var(--color-danger-700)' }}>That link is invalid or expired.</p></AuthCard>
 }
