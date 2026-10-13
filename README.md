@@ -3,15 +3,6 @@
 A news-aggregation platform: story clustering, source bias/factuality tagging, blindspot
 detection, and personalization over Indian news sources.
 
-The two docs in `docs/` are the spec, not just reference material:
-
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — execution: schema (DDL), migrations, jobs,
-  SQL functions, caching, pagination, API mechanics.
-- [`docs/PRODUCT.md`](docs/PRODUCT.md) — meaning: definitions, formulas, thresholds, rubrics,
-  metrics (bias bar, blindspot math, ranking).
-
-Each concept is defined in exactly one of the two; the other links to it.
-
 ## Monorepo layout
 
 ```
@@ -20,11 +11,10 @@ apps/
   api/         Node/TS (Fastify) — auth, feed/story/topic/rating/saved/curator REST API
   web/         React 18 + TS (Vite) — the frontend
 packages/
-  shared-types/  TS types generated from docs/openapi.yaml (openapi-typescript)
+  shared-types/  TS types generated from the OpenAPI spec (openapi-typescript)
 config/        YAML config for clustering, embedding input, product/blindspot params, sources
 infra/         docker-compose, Postgres migrations, migration runner
-validation/    tests that validate the SQL/logic embedded in the docs themselves
-docs/          ARCHITECTURE.md, PRODUCT.md, openapi.yaml, runbooks, this repo's todo tracker
+validation/    tests that validate the SQL/logic embedded in the project's spec
 ```
 
 ## Prerequisites
@@ -96,7 +86,7 @@ python -m cli.story_browser  # inspect clustered stories from the CLI
 ```bash
 cd packages/shared-types
 npm install
-npm run generate   # regenerate src/openapi.ts from docs/openapi.yaml
+npm run generate   # regenerate src/openapi.ts from the OpenAPI spec
 ```
 
 ## Running tests
@@ -107,18 +97,12 @@ cd apps/web && npm test          # Vitest
 cd apps/ingestion && pytest      # pytest
 ```
 
-## Validating the docs
+## Validation suite
 
-`validation/` checks the SQL and logic embedded in `docs/ARCHITECTURE.md` / `docs/PRODUCT.md`
-directly — nothing here is committed generated code; it's re-extracted from the docs on every run.
-
-```bash
-./validation/run_all.sh docs/ARCHITECTURE.md docs/PRODUCT.md
-```
+`validation/` checks the SQL and logic embedded in this project's spec directly — nothing here is
+committed generated code; it's re-extracted from the spec on every run (see `validation/run_all.sh`
+and `validation/README.md`).
 
 The DB suite needs PostgreSQL 16 binaries at `/usr/lib/postgresql/16/bin` (Linux-oriented; this is
-what CI uses) — see `docs/mvp-todo.md` and `CLAUDE.md` for details.
+what CI uses).
 
-## Status
-
-See [`docs/mvp-todo.md`](docs/mvp-todo.md) for what's implemented and what's left.

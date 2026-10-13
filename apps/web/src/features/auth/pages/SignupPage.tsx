@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 
+import { Button } from '../../../components/ui/Button'
 import { ApiError } from '../../../lib/apiClient'
 import { useSignup } from '../hooks/useAuthMutations'
+import { AuthCard } from '../components/AuthCard'
 
 export function SignupPage() {
   const [email, setEmail] = useState('')
@@ -15,47 +17,34 @@ export function SignupPage() {
   }
 
   if (signup.isSuccess) {
-    return <p className="text-sm">Check your email to verify your account.</p>
+    return <AuthCard title="Check your email"><p className="text-sm">We sent a link to verify your account.</p></AuthCard>
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex max-w-sm flex-col gap-3">
-      <h1 className="text-xl font-semibold">Sign up</h1>
-      <input
-        type="email"
-        required
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="rounded border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-      />
-      <input
-        type="password"
-        required
-        minLength={10}
-        maxLength={128}
-        placeholder="Password (10-128 characters)"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="rounded border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-      />
-      {signup.isError && (
-        <p className="text-sm text-red-700 dark:text-red-400">
-          {signup.error instanceof ApiError && signup.error.code === 'common_password'
-            ? 'That password is too common — please choose another.'
-            : 'Something went wrong. Please try again.'}
+    <AuthCard title="Sign up">
+      <form onSubmit={onSubmit} className="flex flex-col gap-3">
+        <div className="field">
+          <label htmlFor="email">Email</label>
+          <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="input" />
+        </div>
+        <div className="field">
+          <label htmlFor="password">Password (10-128 characters)</label>
+          <input id="password" type="password" required minLength={10} maxLength={128} value={password} onChange={(e) => setPassword(e.target.value)} className="input" />
+        </div>
+        {signup.isError && (
+          <p className="text-sm" style={{ color: 'var(--color-danger-700)' }}>
+            {signup.error instanceof ApiError && signup.error.code === 'common_password'
+              ? 'That password is too common — please choose another.'
+              : 'Something went wrong. Please try again.'}
+          </p>
+        )}
+        <Button type="submit" variant="primary" block disabled={signup.isPending}>
+          {signup.isPending ? 'Signing up…' : 'Sign up'}
+        </Button>
+        <p className="text-muted text-sm">
+          Already have an account? <Link to="/login" style={{ color: 'var(--color-accent)' }}>Log in</Link>
         </p>
-      )}
-      <button
-        type="submit"
-        disabled={signup.isPending}
-        className="rounded bg-neutral-900 px-3 py-2 text-white disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
-      >
-        {signup.isPending ? 'Signing up…' : 'Sign up'}
-      </button>
-      <p className="text-sm text-neutral-500">
-        Already have an account? <Link to="/login" className="underline">Log in</Link>
-      </p>
-    </form>
+      </form>
+    </AuthCard>
   )
 }

@@ -1,3 +1,6 @@
+import { Link } from 'react-router-dom'
+
+import { Button } from '../../../components/ui/Button'
 import { ErrorState, LoadingState } from '../../../components/QueryStates'
 import { useSavedSources, useSavedToggle } from '../hooks/useSaved'
 
@@ -7,22 +10,20 @@ export function SavedSourcesTab() {
 
   if (isLoading) return <LoadingState />
   if (error) return <ErrorState message="Couldn't load followed sources." />
-  if (items.length === 0) return <p className="text-sm text-neutral-500">You're not following any sources yet.</p>
+  if (items.length === 0) return <p className="text-muted text-sm">You're not following any sources yet.</p>
 
   return (
-    <ul className="flex flex-col gap-2">
+    <ul className="flex flex-col" style={{ borderTop: '2px solid var(--color-divider)' }}>
       {items.map((source) => (
-        <li key={source.id} className="flex items-center justify-between gap-4 rounded border border-neutral-200 p-3 dark:border-neutral-800">
-          <div>
+        <li key={source.id} className="flex items-center justify-between gap-4 py-3" style={{ borderBottom: '1px solid var(--color-divider)' }}>
+          <Link to={`/sources/${source.id}`} className="hover:underline">
             <p className="font-medium">{source.name}</p>
-            <p className="text-xs text-neutral-500">
+            <p className="text-muted text-xs">
               {source.domain}
               {source.status === 'deprecated' && ' · no longer updated'}
             </p>
-          </div>
-          <button type="button" onClick={() => unsave.mutate(source.id)} className="text-sm underline">
-            Unfollow
-          </button>
+          </Link>
+          <Button variant="ghost" onClick={() => unsave.mutate(source.id)}>Unfollow</Button>
         </li>
       ))}
     </ul>

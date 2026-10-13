@@ -28,7 +28,11 @@ services:
       retries: 10
 
   ingestion:
-    build: ../apps/ingestion
+    build:
+      # context is the repo root, not apps/ingestion: config.py reads config/ at the repo
+      # root via a relative path, so the build needs both directories on disk.
+      context: ..
+      dockerfile: apps/ingestion/Dockerfile
     environment:
       DATABASE_URL: postgresql://newstack:newstack@db:5432/newstack
     depends_on:
@@ -36,10 +40,14 @@ services:
         condition: service_healthy
     restart: unless-stopped
     volumes:
-      - ingestion_models:/app/models
+      - ingestion_models:/app/apps/ingestion/models
 
   api:
-    build: ../apps/api
+    build:
+      # context is the repo root, not apps/api: src/features/blindspot/config.ts reads
+      # config/ at the repo root via a relative path, so the build needs both on disk.
+      context: ..
+      dockerfile: apps/api/Dockerfile
     environment:
       DATABASE_URL: postgresql://newstack:newstack@db:5432/newstack
       REDIS_URL: redis://redis:6379
@@ -55,7 +63,9 @@ services:
     restart: unless-stopped
 
   mailer:
-    build: ../apps/api
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
     command: ["node", "dist/mailer/index.js"]
     environment:
       DATABASE_URL: postgresql://newstack:newstack@db:5432/newstack
@@ -68,7 +78,11 @@ services:
     restart: unless-stopped
 
   web:
-    build: ../apps/web
+    build:
+      # context is the repo root, not apps/web: apps/web/src imports packages/shared-types
+      # via a relative path, so the build needs both directories on disk.
+      context: ..
+      dockerfile: apps/web/Dockerfile
     # No VITE_API_URL: Vite env vars are resolved at build time, not runtime, and
     # apiClient.ts's default (http://localhost:3000) is already correct here — the browser
     # calls the API directly on the host, never through the compose network, so the

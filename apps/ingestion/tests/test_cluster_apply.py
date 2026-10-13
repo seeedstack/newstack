@@ -161,6 +161,45 @@ def test_move_tombstones_emptied_old_story(source_id):
     assert old_status == ("tombstoned", new_story_id)  # NOW tombstoned: all members gone
 
 
+def test_create_after_drift_tombstones_emptied_old_story(source_id):
+    """Review Focus: decide() can return CREATE for an already-clustered article (re-embed
+    drifted below stay_threshold with no MOVE candidate either) — the old story still loses
+    its only member and must be tombstoned exactly like a MOVE does, or it's left active
+    with zero articles forever (I-equivalent of the MOVE case, just a different Decision)."""
+    with psycopg.connect(DSN, autocommit=True) as conn:
+        from pgvector.psycopg import register_vector
+        register_vector(conn)
+        headline_id = _insert_pending_article(source_id, "x.com/drift-headline-6")
+        old_story_id = conn.execute(
+            "INSERT INTO stories (title, summary, headline_article_id, representative_embedding, "
+            "representative_embedding_model, cluster_version, status, first_seen_at, "
+            "event_last_updated_at, last_coverage_at) "
+            "VALUES ('Old', 's', %s, %s, 'test-model@rev', 'v1', 'active', now(), now(), now()) RETURNING id",
+            (headline_id, _vec([1.0])),
+        ).fetchone()[0]
+        conn.execute("UPDATE articles SET story_id=%s, cluster_version='v1', embedding=%s, "
+                     "embedding_model='test-model@rev', embedded_content_hash='e1:seed' WHERE id=%s",
+                     (old_story_id, _vec([1.0]), headline_id))
+
+    # Re-embed the only member with a vector orthogonal to the story's representative
+    # embedding and with no other candidate story around — similarity to "current" drops
+    # below stay_threshold, no candidate reaches move_margin, so decide() returns CREATE.
+    with psycopg.connect(DSN) as conn:
+        from pgvector.psycopg import register_vector
+        register_vector(conn)
+        outcome = apply_embed_result(
+            conn, article_id=headline_id, h="e1:seed", vector=_vec([0.0, 1.0]),
+            embedding_model_id="test-model@rev", title="Drifted", excerpt="body",
+        )
+    assert outcome.action == "CREATE"
+    assert outcome.story_id != str(old_story_id)
+    with psycopg.connect(DSN, autocommit=True) as conn:
+        status, merged_into = conn.execute(
+            "SELECT status, merged_into FROM stories WHERE id = %s", (old_story_id,)
+        ).fetchone()
+    assert (status, str(merged_into)) == ("tombstoned", outcome.story_id)  # emptied old story must not stay active
+
+
 def test_stale_write_rejected_when_content_hash_changed(source_id):
     """Review Focus: a concurrent content edit between EMBED's read and T3's commit must
     reject the write, never silently commit a vector for stale content (I5)."""

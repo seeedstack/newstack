@@ -11,10 +11,10 @@ const ENTRIES = [
 
 export function BiasBarLegend() {
   return (
-    <ul className="flex flex-wrap gap-3 text-xs text-neutral-500">
+    <ul className="text-muted flex flex-wrap gap-3 text-xs">
       {ENTRIES.map((e) => (
         <li key={e.label} className="flex items-center gap-1.5">
-          <span className={`inline-block h-2.5 w-2.5 rounded-full ${e.colorClass}`} />
+          <span className={`inline-block h-2.5 w-2.5 ${e.colorClass}`} />
           {e.label}
         </li>
       ))}
