@@ -65,9 +65,11 @@
   --color-danger-800: #7c1405;
   --color-danger-900: #4d170e;
 
-  --font-heading: "Archivo", system-ui, sans-serif;
+  --font-heading: "Inter", system-ui, sans-serif;
   --font-heading-weight: 800;
-  --font-body: "Archivo", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-headline: "Source Serif 4", serif;
+  --font-headline-weight: 600;
 
   --space-1: 4.0px;
   --space-2: 8.0px;
@@ -107,6 +109,13 @@ body { margin: 0; font-size: 15px; line-height: 1.55; font-weight: 400; }
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading); font-weight: var(--font-heading-weight);
   line-height: 1.12; letter-spacing: -0.015em; margin: 0 0 var(--space-2);
+}
+/* Editorial headline override — the Latest heading, storyboard card headlines,
+   and article page titles. Font-size/margin stay whatever the element already
+   has; only the typeface switches, so existing card layouts don't shift. */
+.article-headline {
+  font-family: var(--font-headline); font-weight: var(--font-headline-weight);
+  line-height: 1.3; letter-spacing: -0.005em;
 }
 h1 { font-size: 42px; }
 h2 { font-size: 32px; }

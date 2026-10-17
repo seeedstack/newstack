@@ -561,6 +561,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/public/sources/distribution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Site-wide count of active sources per bias category */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Cached 1h, same as source metadata. PRODUCT §3.5: counts, never a single left/right score — this is the aggregate the home feed's bias color key is drawn from. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SourceDistribution"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/public/sources/{id}": {
         parameters: {
             query?: never;
@@ -1291,6 +1327,15 @@ export interface components {
             centerRight: components["schemas"]["BiasBarSegment"];
             right: components["schemas"]["BiasBarSegment"];
             notRated: components["schemas"]["BiasBarSegment"];
+        };
+        /** @description 6 buckets — the 5 bias categories plus `notRated` — counting every active source, not one story's coverage (PRODUCT §3.3's query, without the story filter). */
+        SourceDistribution: {
+            left: number;
+            centerLeft: number;
+            center: number;
+            centerRight: number;
+            right: number;
+            notRated: number;
         };
         FeedItem: {
             /** Format: uuid */

@@ -28,7 +28,7 @@ export function StoryDetailPage() {
   if (story.status === 'tombstoned') {
     return (
       <div className="flex flex-col gap-3">
-        <h1>{story.title}</h1>
+        <h1 className="article-headline">{story.title}</h1>
         {story.redirectTo !== null ? (
           <p className="text-sm opacity-80">
             This story moved to{' '}
@@ -54,7 +54,7 @@ export function StoryDetailPage() {
       </Button>
 
       <div className="flex items-start justify-between gap-4">
-        <h1 style={{ textWrap: 'pretty' }}>{story.title}</h1>
+        <h1 className="article-headline" style={{ textWrap: 'pretty' }}>{story.title}</h1>
         <SaveToggleButton kind="stories" id={story.id} />
       </div>
       {story.summary !== null && <p className="max-w-[62ch] text-base">{story.summary}</p>}

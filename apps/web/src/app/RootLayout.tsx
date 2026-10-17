@@ -6,6 +6,8 @@ import { logout } from '../features/auth'
 import { useAuthStore } from '../lib/authStore'
 import { useLocationWeather, type WeatherIcon } from './useLocationWeather'
 
+const CONTAINER = 'mx-auto w-full max-w-[1000px] px-4 md:px-8'
+
 const NAV = [
   { to: '/', label: 'Home', Icon: IconHome },
   { to: '/topics', label: 'Topics', Icon: IconGrid },
@@ -81,7 +83,7 @@ export function RootLayout() {
       {/* Desktop/tablet top nav */}
       <header className="hidden md:flex md:flex-col" style={{ position: 'sticky', top: 0, background: 'var(--color-bg)', zIndex: 5 }}>
         <div style={{ height: '3px', background: 'var(--india-saffron)' }} />
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center h-[68px] px-6" style={{ borderBottom: '2px solid var(--color-divider)' }}>
+        <div className={`grid grid-cols-[1fr_auto_1fr] items-center h-[68px] ${CONTAINER}`} style={{ borderBottom: '2px solid var(--color-divider)' }}>
           <WeatherDate />
           <Brand />
           <div className="flex items-center justify-end gap-2">
@@ -95,7 +97,7 @@ export function RootLayout() {
             )}
           </div>
         </div>
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 py-2" style={{ borderBottom: '2px solid var(--color-divider)' }}>
+        <div className={`flex items-center gap-6 py-2 ${CONTAINER}`} style={{ borderBottom: '2px solid var(--color-divider)' }}>
           <input type="search" placeholder="Search" className="input max-w-[260px]" />
           <nav className="flex items-center gap-2">
             {NAV.map(({ to, label, Icon }) => (
@@ -106,14 +108,13 @@ export function RootLayout() {
               </NavLink>
             ))}
           </nav>
-          <div />
         </div>
       </header>
 
       {/* Mobile top bar */}
       <header className="md:hidden" style={{ position: 'sticky', top: 0, background: 'var(--color-bg)', zIndex: 5 }}>
         <div style={{ height: '3px', background: 'var(--india-saffron)' }} />
-        <div className="flex h-14 items-center justify-between px-4" style={{ borderBottom: '2px solid var(--color-divider)' }}>
+        <div className={`flex h-14 items-center justify-between ${CONTAINER}`} style={{ borderBottom: '2px solid var(--color-divider)' }}>
           <Brand />
           {isSignedIn ? (
             <Button variant="ghost" onClick={() => void onLogout()}>Log out</Button>
@@ -123,8 +124,8 @@ export function RootLayout() {
         </div>
       </header>
 
-      <main className="flex-1 px-4 py-6 md:px-8">
-        <div className="mx-auto w-full max-w-[1000px]">
+      <main className="flex-1 py-6">
+        <div className={CONTAINER}>
           <Outlet />
         </div>
       </main>

@@ -5,6 +5,7 @@ import type { components } from '../../../../../packages/shared-types/src/openap
 
 export type BiasBarSegment = components['schemas']['BiasBarSegment']
 export type BiasBar = components['schemas']['BiasBar']
+export type SourceDistribution = components['schemas']['SourceDistribution']
 export type FeedItem = components['schemas']['FeedItem']
 export type FeedResponse = components['schemas']['FeedResponse']
 export type SourceCard = components['schemas']['SourceCard']

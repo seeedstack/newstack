@@ -20,12 +20,12 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
         <span>·</span>
         <span>{timeAgo(item.lastCoverageAt)}</span>
       </div>
-      <h2 style={{ fontSize: '19px', textWrap: 'pretty' }}>
+      <h2 className="article-headline" style={{ fontSize: '19px', textWrap: 'pretty' }}>
         <Link to={`/stories/${item.id}`} className="hover:underline">
           {item.title}
         </Link>
       </h2>
-      {item.summary !== null && <p className="text-sm opacity-80">{item.summary}</p>}
+      {item.summary !== null && <p className="line-clamp-2 text-sm opacity-80">{item.summary}</p>}
       <BiasBar bar={item.biasBar} />
       <div className="mt-auto flex items-center justify-between pt-1">
         <Link to={`/stories/${item.id}`} className="text-xs font-semibold" style={{ color: 'var(--color-accent-700)' }}>

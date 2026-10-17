@@ -15,7 +15,7 @@ export function HomeFeedPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <h1>Latest</h1>
+        <h1 className="article-headline">Latest</h1>
         <BiasBarLegend />
       </div>
 
