@@ -25,6 +25,13 @@ export function submitRating(sourceId: string, input: NewRating): Promise<unknow
   return curatorFetch(`/api/curator/sources/${sourceId}/ratings`, { method: 'POST', body: input })
 }
 
+export function setSourceCategories(sourceId: string, categories: string[]): Promise<{ categories: string[] }> {
+  return curatorFetch<{ categories: string[] }>(`/api/curator/sources/${sourceId}/categories`, {
+    method: 'PUT',
+    body: { categories },
+  })
+}
+
 export function getBlindspotFeed(cursor?: string): Promise<BlindspotFeedResponse> {
   const query = cursor === undefined ? '' : `?cursor=${encodeURIComponent(cursor)}`
   return curatorFetch<BlindspotFeedResponse>(`/api/curator/blindspot-feed${query}`)

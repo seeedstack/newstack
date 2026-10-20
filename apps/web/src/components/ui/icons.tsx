@@ -20,3 +20,4 @@ export const IconCloud = (p: IconProps) => base(p, 'M17.5 19H6a4 4 0 1 1 .62-7.9
 export const IconRain = (p: IconProps) => base(p, 'M16 13a4 4 0 0 0 0-8 5.5 5.5 0 0 0-10.5 1.5A4 4 0 0 0 6 14h10zM8 17v3M12 17v3M16 17v3')
 export const IconSnow = (p: IconProps) => base(p, 'M16 13a4 4 0 0 0 0-8 5.5 5.5 0 0 0-10.5 1.5A4 4 0 0 0 6 14h10zM8 18h.01M12 18h.01M16 18h.01')
 export const IconStorm = (p: IconProps) => base(p, 'M16 11a4 4 0 0 0 0-8 5.5 5.5 0 0 0-10.5 1.5A4 4 0 0 0 6 12h5M13 13l-3 5h3l-2 4')
+export const IconList = (p: IconProps) => base(p, 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01')

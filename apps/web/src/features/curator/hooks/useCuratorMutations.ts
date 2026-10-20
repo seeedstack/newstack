@@ -7,6 +7,7 @@ import {
   hideStory,
   onboardSource,
   reportClusterError,
+  setSourceCategories,
   submitRating,
 } from '../api'
 import type { NewClusterReport, NewRating, NewSource } from '../types'
@@ -36,6 +37,12 @@ export function useReportClusterError() {
 
 export function useSubmitRating() {
   return useMutation({ mutationFn: ({ sourceId, input }: { sourceId: string; input: NewRating }) => submitRating(sourceId, input) })
+}
+
+export function useSetSourceCategories() {
+  return useMutation({
+    mutationFn: ({ sourceId, categories }: { sourceId: string; categories: string[] }) => setSourceCategories(sourceId, categories),
+  })
 }
 
 export function useBlindspotFeed() {

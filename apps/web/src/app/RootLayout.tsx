@@ -1,7 +1,7 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 
 import { Button } from '../components/ui/Button'
-import { IconBookmark, IconCloud, IconGrid, IconHome, IconRain, IconSnow, IconStorm, IconSun } from '../components/ui/icons'
+import { IconBookmark, IconCloud, IconGrid, IconHome, IconList, IconRain, IconSnow, IconStorm, IconSun } from '../components/ui/icons'
 import { logout } from '../features/auth'
 import { useAuthStore } from '../lib/authStore'
 import { useLocationWeather, type WeatherIcon } from './useLocationWeather'
@@ -11,6 +11,7 @@ const CONTAINER = 'mx-auto w-full max-w-[1000px] px-4 md:px-8'
 const NAV = [
   { to: '/', label: 'Home', Icon: IconHome },
   { to: '/topics', label: 'Topics', Icon: IconGrid },
+  { to: '/sources', label: 'Sources', Icon: IconList },
   { to: '/me/saved', label: 'Saved', Icon: IconBookmark },
 ]
 
@@ -97,7 +98,7 @@ export function RootLayout() {
             )}
           </div>
         </div>
-        <div className={`flex items-center gap-6 py-2 ${CONTAINER}`} style={{ borderBottom: '2px solid var(--color-divider)' }}>
+        <div className={`grid grid-cols-[1fr_auto_1fr] items-center py-2 ${CONTAINER}`} style={{ borderBottom: '2px solid var(--color-divider)' }}>
           <input type="search" placeholder="Search" className="input max-w-[260px]" />
           <nav className="flex items-center gap-2">
             {NAV.map(({ to, label, Icon }) => (
@@ -108,6 +109,7 @@ export function RootLayout() {
               </NavLink>
             ))}
           </nav>
+          <div />
         </div>
       </header>
 
@@ -131,7 +133,7 @@ export function RootLayout() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="grid grid-cols-3 md:hidden" style={{ borderTop: '2px solid var(--color-divider)', position: 'sticky', bottom: 0, background: 'var(--color-bg)' }}>
+      <nav className="grid grid-cols-4 md:hidden" style={{ borderTop: '2px solid var(--color-divider)', position: 'sticky', bottom: 0, background: 'var(--color-bg)' }}>
         {NAV.map(({ to, label, Icon }) => (
           <NavLink key={to} to={to} end={to === '/'}
             className="flex min-h-14 flex-col items-center gap-0.5 border-t-[3px] py-2.5 text-[11px]"

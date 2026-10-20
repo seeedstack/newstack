@@ -1,7 +1,27 @@
 import { Link } from 'react-router-dom'
 
+import { Tag } from '../../../components/ui/Tag'
 import { SaveToggleButton } from '../../saved'
+import { OWNERSHIP_TRANSPARENCY_LABEL, SENSATIONALISM_LABEL, useSourceOwnership, useSourceSensationalism } from '../../sources'
 import type { SourceCard } from '../types'
+
+// Diversity integration's smallest real step (docs/scoping-source-directory-and-diversity.md
+// §2 option A): surface each source's existing sensationalism/ownership on its story-detail
+// card, same read endpoints SourceProfilePage already uses. No new metric, never a ranking
+// input — PRODUCT §6.2 stays bias-blind.
+function SourceDiversityBadges({ sourceId }: { sourceId: string }) {
+  const { data: sensationalism } = useSourceSensationalism(sourceId)
+  const { data: ownership } = useSourceOwnership(sourceId)
+
+  if (sensationalism?.current === undefined && (ownership === null || ownership === undefined)) return null
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {sensationalism?.current && <Tag variant="outline">{SENSATIONALISM_LABEL[sensationalism.current.level]}</Tag>}
+      {ownership && <Tag variant="outline">{OWNERSHIP_TRANSPARENCY_LABEL[ownership.ownershipTransparency]}</Tag>}
+    </div>
+  )
+}
 
 export function BiasColumn({ label, colorClass, cards }: { label: string; colorClass: string; cards: SourceCard[] }) {
   if (cards.length === 0) return null
@@ -31,6 +51,7 @@ export function BiasColumn({ label, colorClass, cards }: { label: string; colorC
               {card.primaryArticle.title}
             </a>
             {card.moreCount > 0 && <p className="text-muted text-xs">+{card.moreCount} more from {card.sourceName}</p>}
+            <SourceDiversityBadges sourceId={card.sourceId} />
           </li>
         ))}
       </ul>

@@ -5,7 +5,15 @@ import { IconAlert, IconArrowLeft } from '../../../components/ui/icons'
 import { Tag } from '../../../components/ui/Tag'
 import { EmptyState, ErrorState, LoadingState } from '../../../components/QueryStates'
 import { SaveToggleButton } from '../../saved'
-import { useSource, useSourceRatings } from '../hooks/useSource'
+import { GEO_TOPIC_ORDER, GEO_TOPICS, stanceLabel } from '../geoTopics'
+import { useSource, useSourceGeoRatings, useSourceOwnership, useSourceRatings, useSourceSensationalism } from '../hooks/useSource'
+import { OWNERSHIP_TRANSPARENCY_LABEL, SENSATIONALISM_LABEL } from '../labels'
+
+const EDITORIAL_INDEPENDENCE_LABEL: Record<string, string> = {
+  no_documented_influence: 'No documented editorial influence',
+  documented_instances: 'Documented instances of influence',
+  insufficient_evidence: 'Editorial independence: insufficient evidence',
+}
 
 function monogram(name: string): string {
   return name
@@ -26,6 +34,9 @@ export function SourceProfilePage() {
   const navigate = useNavigate()
   const { data: source, error, isLoading } = useSource(sourceId)
   const { data: ratings } = useSourceRatings(sourceId)
+  const { data: sensationalism } = useSourceSensationalism(sourceId)
+  const { data: ownership } = useSourceOwnership(sourceId)
+  const { data: geoRatings } = useSourceGeoRatings(sourceId)
 
   if (isLoading) return <LoadingState />
   if (error) return <ErrorState message="Couldn't load this source." />
@@ -64,13 +75,17 @@ export function SourceProfilePage() {
         <SaveToggleButton kind="sources" id={source.id} />
       </div>
 
-      {ratings?.current && (
+      {(ratings?.current || sensationalism?.current) && (
         <div className="flex flex-wrap gap-2">
-          {ratings.current.biasRating !== null && <Tag variant="accent">{ratings.current.biasRating}</Tag>}
-          <Tag variant="neutral">{ratings.current.factuality} factuality</Tag>
+          {ratings?.current?.biasRating != null && <Tag variant="accent">{ratings.current.biasRating}</Tag>}
+          {ratings?.current && <Tag variant="neutral">{ratings.current.factuality} factuality</Tag>}
+          {sensationalism?.current && <Tag variant="outline">{SENSATIONALISM_LABEL[sensationalism.current.level]}</Tag>}
         </div>
       )}
-      <p className="text-muted text-xs">Bias and factuality are rated separately and never combined into one score.</p>
+      <p className="text-muted text-xs">
+        Bias, factuality, sensationalism, geopolitical positioning, and ownership are rated independently and never combined
+        into one score.
+      </p>
 
       <div className="flex flex-col gap-3">
         <h3>Rating history</h3>
@@ -102,6 +117,43 @@ export function SourceProfilePage() {
             </table>
           </div>
         )}
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <h3>Ownership and editorial independence</h3>
+        {ownership === null || ownership === undefined ? (
+          <p className="text-muted text-sm">Not yet researched.</p>
+        ) : (
+          <>
+            <div className="flex flex-wrap gap-2">
+              <Tag variant="neutral">{OWNERSHIP_TRANSPARENCY_LABEL[ownership.ownershipTransparency]}</Tag>
+              <Tag variant="neutral">{EDITORIAL_INDEPENDENCE_LABEL[ownership.editorialIndependence]}</Tag>
+            </div>
+            {ownership.notes && <p className="text-muted text-sm">{ownership.notes}</p>}
+          </>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <h3>Geopolitical positioning</h3>
+        <p className="text-muted text-xs">
+          Rated per topic, independent of domestic bias — most outlets carry no rating on most topics.
+        </p>
+        <div className="flex flex-col gap-2">
+          {GEO_TOPIC_ORDER.map((topic) => {
+            const entry = geoRatings?.[topic]?.current ?? null
+            return (
+              <div key={topic} className="flex flex-wrap items-center justify-between gap-2 text-sm" style={{ borderBottom: '1px solid var(--color-divider)', paddingBottom: 'var(--space-2)' }}>
+                <span>{GEO_TOPICS[topic].label}</span>
+                {entry === null ? (
+                  <span className="text-muted">Not yet assessed</span>
+                ) : (
+                  <Tag variant="outline">{stanceLabel(topic, entry.stance)}</Tag>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

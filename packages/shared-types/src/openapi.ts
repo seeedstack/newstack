@@ -561,6 +561,98 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/public/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Source directory list/search — structural filters only at MVP */
+        get: {
+            parameters: {
+                query?: {
+                    category?: "national" | "regional" | "language" | "business" | "geopolitical" | "specialist";
+                    country?: string;
+                    language?: string;
+                    q?: string;
+                    limit?: number;
+                    offset?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Plain offset pagination, not the keyset-cursor machinery feeds use — the registry is curated and slow-growing (ARCHITECTURE §10, §1 complexity budget). */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SourceListResponse"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/curator/sources/{id}/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace a source's directory category tags (whole-set PUT) */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        categories: ("national" | "regional" | "language" | "business" | "geopolitical" | "specialist")[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Curator-assigned, multi-valued, never derived (PRODUCT §5.9) — a descriptive tag, not a provenance record, so the whole set is replaced at once rather than append-only revisioned. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            categories: ("national" | "regional" | "language" | "business" | "geopolitical" | "specialist")[];
+                        };
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                404: components["responses"]["NotFound"];
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/public/sources/distribution": {
         parameters: {
             query?: never;
@@ -710,6 +802,264 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["Rating"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                404: components["responses"]["NotFound"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/sources/{id}/sensationalism": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current sensationalism rating + full history for a source */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Same append-only/backward-linked shape as bias/factuality ratings — history is never mutated, only superseded. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            current?: components["schemas"]["SensationalismRating"] | null;
+                            history?: components["schemas"]["SensationalismRating"][];
+                        };
+                    };
+                };
+                404: components["responses"]["NotFound"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/curator/sources/{id}/sensationalism": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit a new current sensationalism rating for a source (atomic revision) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["NewSensationalismRating"];
+                };
+            };
+            responses: {
+                /** @description The prior current row (if any) is superseded in the same transaction the new row is inserted in, so the partial unique index never sees two current rows. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SensationalismRating"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                404: components["responses"]["NotFound"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/sources/{id}/geo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current geopolitical-positioning rating + full history, for all 8 topics */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description One entry per topic code (IN_PAK, IN_CHN, IN_US, IN_RUS, IN_NEIGH, DEFSEC, MULTILAT, INDOPAC), always present even when a topic has never been rated — absence of a *rating row* (current: null) means never assessed, distinct from an explicit insufficient_evidence rating (PRODUCT §5.6). */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            [key: string]: {
+                                current?: components["schemas"]["GeoRating"] | null;
+                                history?: components["schemas"]["GeoRating"][];
+                            };
+                        };
+                    };
+                };
+                404: components["responses"]["NotFound"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/curator/sources/{id}/geo/{topicCode}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit a new current geopolitical-positioning rating for one topic (atomic revision) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    topicCode: "IN_PAK" | "IN_CHN" | "IN_US" | "IN_RUS" | "IN_NEIGH" | "DEFSEC" | "MULTILAT" | "INDOPAC";
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["NewGeoRating"];
+                };
+            };
+            responses: {
+                /** @description The prior current row for this (source, topic) pair, if any, is superseded in the same transaction the new row is inserted in. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GeoRating"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                404: components["responses"]["NotFound"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/sources/{id}/ownership": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ownership transparency + editorial independence disclosure for a source */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A current-state disclosure record, not an append-only rating (PRODUCT §5.8) — null means the source has never been researched for this. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Ownership"] | null;
+                    };
+                };
+                404: components["responses"]["NotFound"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/curator/sources/{id}/ownership": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upsert the ownership/editorial-independence disclosure for a source */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["NewOwnership"];
+                };
+            };
+            responses: {
+                /** @description A plain upsert, not an atomic-revision transaction — a correction overwrites in place since source_ownership has no supersedes chain. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Ownership"];
                     };
                 };
                 400: components["responses"]["ValidationError"];
@@ -1433,6 +1783,27 @@ export interface components {
             deprecatedAt: string | null;
             logoUrl: string | null;
         };
+        SourceListItem: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            domain: string;
+            /** @description ISO 3166 alpha-2, e.g. IN */
+            countryCode: string;
+            /** @enum {string|null} */
+            coverageRegion: "domestic" | "global" | null;
+            /** @description ISO 639-1 of the feed, e.g. en */
+            language: string;
+            /** @description Curator-assigned directory tags (PRODUCT §5.9); never derived, may be empty. */
+            categories: ("national" | "regional" | "language" | "business" | "geopolitical" | "specialist")[];
+        };
+        SourceListResponse: {
+            items: components["schemas"]["SourceListItem"][];
+            /** @description Count of active sources matching the filters, across all pages. */
+            total: number;
+            limit: number;
+            offset: number;
+        };
         BlindspotItem: {
             /** Format: uuid */
             id: string;
@@ -1530,6 +1901,134 @@ export interface components {
              */
             reviewDueAt?: string | null;
             sourceRef?: string | null;
+            notes?: string | null;
+        };
+        SensationalismRating: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            sourceId: string;
+            /** @enum {string} */
+            level: "low" | "medium" | "high" | "insufficient_evidence";
+            method: string;
+            ratedBy: string;
+            /**
+             * Format: date-time
+             * @description When this rating row was inserted — ratings are append-only, never mutated in place.
+             */
+            ratedAt: string;
+            /**
+             * Format: uuid
+             * @description Id of the rating row this one replaced, or null if this is the source's first rating.
+             */
+            supersedes: string | null;
+            /**
+             * Format: date-time
+             * @description When a later rating replaced this one; null while this is the current rating.
+             */
+            supersededAt: string | null;
+        };
+        NewSensationalismRating: {
+            /** @enum {string} */
+            level: "low" | "medium" | "high" | "insufficient_evidence";
+            /** @description e.g. `internal-classifier-v1` or `manual-curation`. */
+            method: string;
+            methodVersion?: string | null;
+            ratedBy: string;
+            /** @description Required (and must differ from `ratedBy`) when `method` is `manual-curation`. */
+            secondRater?: string | null;
+            /** @description Required when `method` is `manual-curation`. */
+            rubricScores?: Record<string, never> | null;
+            /** @description At least 3 entries required when `method` is `manual-curation`. */
+            evidence?: string[] | null;
+            /**
+             * Format: date-time
+             * @description Optional curator-set deadline for re-reviewing this rating.
+             */
+            reviewDueAt?: string | null;
+            sourceRef?: string | null;
+            notes?: string | null;
+        };
+        GeoRating: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            sourceId: string;
+            /** @enum {string} */
+            topicCode: "IN_PAK" | "IN_CHN" | "IN_US" | "IN_RUS" | "IN_NEIGH" | "DEFSEC" | "MULTILAT" | "INDOPAC";
+            /**
+             * @description Direction only — topic-specific pole names (e.g. "dialogue-first" for IN_PAK) are applied at render time, not stored here (PRODUCT §5.6).
+             * @enum {string}
+             */
+            stance: "strongly_minus" | "leans_minus" | "mixed_or_issue_dependent" | "leans_plus" | "strongly_plus" | "insufficient_evidence";
+            method: string;
+            ratedBy: string;
+            /**
+             * Format: date-time
+             * @description When this rating row was inserted — ratings are append-only, never mutated in place.
+             */
+            ratedAt: string;
+            /**
+             * Format: uuid
+             * @description Id of the rating row this one replaced, or null if this is the topic's first rating for this source.
+             */
+            supersedes: string | null;
+            /**
+             * Format: date-time
+             * @description When a later rating replaced this one; null while this is the current rating.
+             */
+            supersededAt: string | null;
+        };
+        NewGeoRating: {
+            /** @enum {string} */
+            stance: "strongly_minus" | "leans_minus" | "mixed_or_issue_dependent" | "leans_plus" | "strongly_plus" | "insufficient_evidence";
+            /** @description e.g. `internal-classifier-v1` or `manual-curation`. */
+            method: string;
+            methodVersion?: string | null;
+            ratedBy: string;
+            /** @description Required (and must differ from `ratedBy`) when `method` is `manual-curation`. */
+            secondRater?: string | null;
+            /** @description Required when `method` is `manual-curation`. */
+            rubricScores?: Record<string, never> | null;
+            /** @description At least 3 entries required when `method` is `manual-curation`. */
+            evidence?: string[] | null;
+            /**
+             * Format: date-time
+             * @description Optional curator-set deadline for re-reviewing this rating.
+             */
+            reviewDueAt?: string | null;
+            sourceRef?: string | null;
+            notes?: string | null;
+        };
+        Ownership: {
+            /** Format: uuid */
+            sourceId: string;
+            /** @enum {string} */
+            ownershipTransparency: "disclosed" | "partially_disclosed" | "undisclosed" | "insufficient_evidence";
+            /**
+             * @description Never derived from ownershipTransparency — the two fields are independent (PRODUCT §5.8).
+             * @enum {string}
+             */
+            editorialIndependence: "no_documented_influence" | "documented_instances" | "insufficient_evidence";
+            evidence: Record<string, never>[] | null;
+            ratedBy: string | null;
+            notes: string | null;
+            /**
+             * Format: date-time
+             * @description Last correction time — this record is overwritten in place, never superseded.
+             */
+            updatedAt: string;
+        };
+        NewOwnership: {
+            /** @enum {string} */
+            ownershipTransparency: "disclosed" | "partially_disclosed" | "undisclosed" | "insufficient_evidence";
+            /**
+             * @description Requires ≥ 1 evidence entry when `documented_instances`.
+             * @enum {string}
+             */
+            editorialIndependence: "no_documented_influence" | "documented_instances" | "insufficient_evidence";
+            evidence?: Record<string, never>[] | null;
+            ratedBy?: string | null;
             notes?: string | null;
         };
         NewSource: {
