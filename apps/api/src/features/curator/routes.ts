@@ -3,6 +3,7 @@ import type { FastifyInstance } from "fastify";
 import { getPool } from "../../db.js";
 import {
   createTopic,
+  listClusterReports,
   NotFoundError,
   onboardSource,
   reportClusterError,
@@ -66,6 +67,16 @@ export async function curatorRoutes(app: FastifyInstance): Promise<void> {
     } catch (err) {
       if (err instanceof ValidationError) return reply.code(400).send({ error: err.code });
       if (err instanceof NotFoundError) return reply.code(404).send({ error: "not_found" });
+      throw err;
+    }
+  });
+
+  app.get("/cluster-reports", async (request, reply) => {
+    try {
+      const result = await listClusterReports(getPool(), request.query as Record<string, unknown>);
+      return reply.send(result);
+    } catch (err) {
+      if (err instanceof ValidationError) return reply.code(400).send({ error: err.code });
       throw err;
     }
   });

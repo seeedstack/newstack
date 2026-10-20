@@ -1,5 +1,5 @@
 import { curatorFetch } from './lib/curatorFetch'
-import type { BlindspotFeedResponse, NewClusterReport, NewRating, NewSource } from './types'
+import type { BlindspotFeedResponse, ClusterReportListFilters, ClusterReportListResponse, NewClusterReport, NewRating, NewSource } from './types'
 
 export function onboardSource(input: NewSource): Promise<{ id: string }> {
   return curatorFetch<{ id: string }>('/api/curator/sources', { method: 'POST', body: input })
@@ -35,4 +35,12 @@ export function setSourceCategories(sourceId: string, categories: string[]): Pro
 export function getBlindspotFeed(cursor?: string): Promise<BlindspotFeedResponse> {
   const query = cursor === undefined ? '' : `?cursor=${encodeURIComponent(cursor)}`
   return curatorFetch<BlindspotFeedResponse>(`/api/curator/blindspot-feed${query}`)
+}
+
+export function getClusterReports(filters: ClusterReportListFilters): Promise<ClusterReportListResponse> {
+  const params = new URLSearchParams()
+  if (filters.resolved !== undefined) params.set('resolved', String(filters.resolved))
+  params.set('limit', String(filters.limit))
+  params.set('offset', String(filters.offset))
+  return curatorFetch<ClusterReportListResponse>(`/api/curator/cluster-reports?${params.toString()}`)
 }

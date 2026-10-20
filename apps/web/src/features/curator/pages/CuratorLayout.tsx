@@ -6,6 +6,7 @@ const TABS = [
   { to: '/curator/sources', label: 'Sources' },
   { to: '/curator/topics', label: 'Topics' },
   { to: '/curator/moderation', label: 'Moderation' },
+  { to: '/curator/cluster-reports', label: 'Cluster reports' },
   { to: '/curator/blindspot', label: 'Blindspot' },
 ]
 

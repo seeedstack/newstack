@@ -1558,7 +1558,33 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Curator review queue of filed clustering-error reports */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Omit to return both resolved and unresolved reports. */
+                    resolved?: boolean;
+                    limit?: number;
+                    offset?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Plain offset pagination, newest first — same rationale as the source directory list (low-volume, curator-facing). */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ClusterReportListResponse"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+            };
+        };
         put?: never;
         /** Report a clustering error (wrong merge or missed merge) */
         post: {
@@ -1800,6 +1826,47 @@ export interface components {
         SourceListResponse: {
             items: components["schemas"]["SourceListItem"][];
             /** @description Count of active sources matching the filters, across all pages. */
+            total: number;
+            limit: number;
+            offset: number;
+        };
+        ClusterReportListItem: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "wrong_merge" | "should_merge";
+            /** Format: uuid */
+            storyId: string;
+            storyTitle: string;
+            /**
+             * Format: uuid
+             * @description Set when kind is wrong_merge.
+             */
+            articleId?: string | null;
+            articleTitle?: string | null;
+            /**
+             * Format: uuid
+             * @description Set when kind is should_merge.
+             */
+            otherStoryId?: string | null;
+            otherStoryTitle?: string | null;
+            /** @description The story's cluster_version at report time. */
+            clusterVersion: string;
+            reportedBy: string;
+            /**
+             * Format: date-time
+             * @description When the curator filed this report.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When a curator marked this report resolved; null while still open. No endpoint sets this yet.
+             */
+            resolvedAt: string | null;
+        };
+        ClusterReportListResponse: {
+            items: components["schemas"]["ClusterReportListItem"][];
+            /** @description Count of reports matching the `resolved` filter, across all pages. */
             total: number;
             limit: number;
             offset: number;
