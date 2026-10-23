@@ -8,7 +8,7 @@ services:
       POSTGRES_DB: newstack
       POSTGRES_INITDB_ARGS: "--locale=C.UTF-8 --encoding=UTF8"
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -20,7 +20,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "6380:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -51,7 +51,7 @@ services:
     environment:
       DATABASE_URL: postgresql://newstack:newstack@db:5432/newstack
       REDIS_URL: redis://redis:6379
-      WEB_ORIGIN: http://localhost:5173
+      WEB_ORIGIN: http://localhost:5174
       PORT: "3000"
     ports:
       - "3000:3000"
@@ -69,7 +69,7 @@ services:
     command: ["node", "dist/mailer/index.js"]
     environment:
       DATABASE_URL: postgresql://newstack:newstack@db:5432/newstack
-      WEB_ORIGIN: http://localhost:5173
+      WEB_ORIGIN: http://localhost:5174
       # RESEND_API_KEY / MAIL_FROM: unset in dev on purpose — the mailer falls back to the
       # console transport (src/mailer/index.ts). Set both in the real environment to send mail.
     depends_on:
@@ -88,7 +88,7 @@ services:
     # calls the API directly on the host, never through the compose network, so the
     # container-internal "api" hostname would be wrong even if set.
     ports:
-      - "5173:5173"
+      - "5174:5173"
     depends_on:
       - api
     restart: unless-stopped

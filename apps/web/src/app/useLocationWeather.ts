@@ -50,3 +50,12 @@ export function useLocationWeather(): LocationWeather | null {
 
   return data
 }
+
+const LAUNCH_DATE = Date.UTC(2026, 0, 1)
+const FALLBACK_CITY = 'New Delhi'
+const MS_PER_DAY = 1000 * 60 * 60 * 24
+
+export function useEdition(city?: string | null): { number: string; city: string } {
+  const number = String(Math.max(1, Math.floor((Date.now() - LAUNCH_DATE) / MS_PER_DAY))).padStart(3, '0')
+  return { number, city: city ?? FALLBACK_CITY }
+}

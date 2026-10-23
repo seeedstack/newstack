@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { EmptyState, ErrorState, LoadingState, LoadMoreButton } from '../../../components/QueryStates'
 import { Tag } from '../../../components/ui/Tag'
@@ -18,7 +18,8 @@ const CATEGORIES: { value: SourceCategory; label: string }[] = [
 const PAGE_SIZE = 20
 
 export function SourceDirectoryPage() {
-  const [q, setQ] = useState('')
+  const [searchParams] = useSearchParams()
+  const [q, setQ] = useState(searchParams.get('q') ?? '')
   const [category, setCategory] = useState<SourceCategory | undefined>(undefined)
   const [country, setCountry] = useState('')
   const [language, setLanguage] = useState('')
