@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { EmptyState, ErrorState, LoadingState, LoadMoreButton } from '../../../components/QueryStates'
+import { SectionEyebrow } from '../../../components/ui/SectionEyebrow'
 import { Tag } from '../../../components/ui/Tag'
 import { useSourceList } from '../hooks/useSource'
 import type { SourceCategory } from '../types'
@@ -29,6 +30,7 @@ export function SourceDirectoryPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <SectionEyebrow>Source Directory</SectionEyebrow>
       <h1 className="article-headline">Source directory</h1>
 
       <div className="flex flex-col gap-3">

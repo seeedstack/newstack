@@ -2,6 +2,7 @@ import { useHomeFeed } from '../hooks/useHomeFeed'
 import { FeedItemCard } from '../components/FeedItemCard'
 import { BiasBarLegend } from '../components/BiasBarLegend'
 import { EmptyState, ErrorState, LoadingState, LoadMoreButton } from '../../../components/QueryStates'
+import { SectionEyebrow } from '../../../components/ui/SectionEyebrow'
 
 export function HomeFeedPage() {
   const { data, error, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage, refetch } = useHomeFeed()
@@ -14,6 +15,7 @@ export function HomeFeedPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <SectionEyebrow>Latest</SectionEyebrow>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="article-headline">Latest</h1>
         <BiasBarLegend />
@@ -33,7 +35,7 @@ export function HomeFeedPage() {
       {items.length === 0 ? (
         <EmptyState message="No stories yet." />
       ) : (
-        <div className="grid grid-cols-1 gap-0.5 sm:grid-cols-2 lg:grid-cols-3" style={{ background: 'var(--color-divider)', border: '2px solid var(--color-divider)' }}>
+        <div className="feed-grid">
           {items.map((item) => (
             <FeedItemCard key={item.id} item={item} />
           ))}

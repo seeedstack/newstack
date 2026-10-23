@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 
 import { EmptyState, ErrorState, LoadingState } from '../../../components/QueryStates'
+import { SectionEyebrow } from '../../../components/ui/SectionEyebrow'
 import { SaveToggleButton } from '../../saved'
 import { useTopics } from '../hooks/useTopics'
 
@@ -13,6 +14,7 @@ export function TopicListPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <SectionEyebrow>Topics</SectionEyebrow>
       <div>
         <h1>Topics</h1>
         <p className="text-muted mt-1">Follow topics to shape your feed.</p>

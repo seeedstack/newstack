@@ -185,7 +185,7 @@ figcaption {
 /* — forms — */
 .field > label {
   display: block; font-size: 12px; margin-bottom: 5px;
-  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+  color: var(--color-text-secondary);
 }
 .input {
   width: 100%; min-height: 36px; padding: 6px 10px; font: inherit;
@@ -270,8 +270,8 @@ textarea.input { min-height: 90px; resize: vertical; }
 .table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .table th {
   text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text) 60%, transparent);
-  padding: var(--space-2); border-bottom: 2px solid var(--color-divider);
+  color: var(--color-text-muted);
+  padding: var(--space-2); border-bottom: 2px solid var(--color-text);
 }
 .table td {
   padding: var(--space-2);
@@ -385,4 +385,39 @@ textarea.input { min-height: 90px; resize: vertical; }
 .site-footer-swatches span { width: 6px; height: 6px; background: var(--india-saffron); }
 .site-footer-swatches span:nth-child(2) { background: var(--color-bg); }
 .site-footer-swatches span:nth-child(3) { background: var(--india-green); }
+
+/* — content: eyebrow, card kicker, feed grid (UI_PORT_SPEC.md §4) — */
+.eyebrow {
+  display: flex; align-items: center; gap: 10px; padding-bottom: 14px;
+  border-bottom: 2px solid var(--color-text);
+  font-family: var(--font-body); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+}
+.eyebrow.dark { border-bottom-color: var(--color-bg); color: var(--color-bg); }
+.eyebrow.spaced { margin-bottom: clamp(24px, 3vw, 40px); }
+.eyebrow-square { width: 8px; height: 8px; flex: none; background: var(--india-saffron); }
+
+.kicker { display: flex; align-items: baseline; gap: 10px; font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.kicker-rule { width: 18px; height: 2px; flex: none; align-self: center; background: var(--india-saffron); }
+
+.feed-card { display: flex; flex-direction: column; gap: 12px; padding: 20px 0; border-bottom: 1px solid var(--color-divider); background: transparent; }
+.headline-link {
+  color: var(--color-text); font-family: var(--font-headline); font-weight: 700;
+  font-size: clamp(19px, 2vw, 22px); line-height: 1.25; letter-spacing: -0.005em; text-wrap: pretty;
+  text-decoration-line: underline; text-decoration-color: transparent; text-decoration-thickness: 1px;
+  text-underline-offset: 5px; transition: text-decoration-color 0.15s;
+}
+.headline-link:hover { text-decoration-color: var(--color-text); }
+
+.feed-grid { display: grid; grid-template-columns: 1fr; }
+@media (min-width: 640px) {
+  .feed-grid { grid-template-columns: repeat(2, 1fr); }
+  .feed-grid > * { border-left: 1px solid var(--color-divider); padding-left: clamp(24px, 3vw, 40px); }
+  .feed-grid > *:nth-child(2n+1) { border-left: none; padding-left: 0; }
+}
+@media (min-width: 1024px) {
+  .feed-grid { grid-template-columns: repeat(3, 1fr); }
+  .feed-grid > * { border-left: 1px solid var(--color-divider); padding-left: clamp(24px, 3vw, 40px); }
+  .feed-grid > *:nth-child(3n+1) { border-left: none; padding-left: 0; }
+}
 

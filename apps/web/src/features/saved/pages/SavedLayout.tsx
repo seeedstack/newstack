@@ -1,5 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 
+import { SectionEyebrow } from '../../../components/ui/SectionEyebrow'
+
 const TABS = [
   { to: '/me/saved/stories', label: 'Stories' },
   { to: '/me/saved/sources', label: 'Sources' },
@@ -9,6 +11,7 @@ const TABS = [
 export function SavedLayout() {
   return (
     <div className="flex flex-col gap-4">
+      <SectionEyebrow>Your Library</SectionEyebrow>
       <h1>Saved</h1>
       <div className="seg self-start">
         {TABS.map((tab) => (
