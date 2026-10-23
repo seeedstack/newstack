@@ -9,6 +9,13 @@ import { curatorRoutes } from "./features/curator/routes.js";
 import { feedRoutes } from "./features/feed/routes.js";
 import { storyRoutes } from "./features/story/routes.js";
 import { ratingCuratorRoutes, ratingPublicRoutes } from "./features/rating/routes.js";
+import { geoRatingCuratorRoutes, geoRatingPublicRoutes } from "./features/geo-rating/routes.js";
+import {
+  sensationalismCuratorRoutes,
+  sensationalismPublicRoutes,
+} from "./features/sensationalism-rating/routes.js";
+import { ownershipCuratorRoutes, ownershipPublicRoutes } from "./features/ownership/routes.js";
+import { sourceCategoryCuratorRoutes } from "./features/source-category/routes.js";
 import { savedRoutes } from "./features/saved/routes.js";
 import { sourceRoutes } from "./features/source/routes.js";
 import { topicRoutes } from "./features/topic/routes.js";
@@ -98,6 +105,9 @@ export function buildApp(): FastifyInstance {
     await storyRoutes(publicScope);
     await topicRoutes(publicScope);
     await ratingPublicRoutes(publicScope);
+    await sensationalismPublicRoutes(publicScope);
+    await geoRatingPublicRoutes(publicScope);
+    await ownershipPublicRoutes(publicScope);
     await sourceRoutes(publicScope);
   }, { prefix: "/api/public" });
 
@@ -114,6 +124,10 @@ export function buildApp(): FastifyInstance {
   app.register(async (curatorScope) => {
     await curatorPlugin(curatorScope);
     await ratingCuratorRoutes(curatorScope);
+    await sensationalismCuratorRoutes(curatorScope);
+    await geoRatingCuratorRoutes(curatorScope);
+    await ownershipCuratorRoutes(curatorScope);
+    await sourceCategoryCuratorRoutes(curatorScope);
     await curatorRoutes(curatorScope);
     await blindspotCuratorRoutes(curatorScope);
   }, { prefix: "/api/curator" });

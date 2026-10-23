@@ -25,12 +25,7 @@ export function BiasBar({ bar }: { bar: BiasBarData }) {
 
   return (
     <div>
-      <div
-        role="img"
-        aria-label={summary}
-        title={summary}
-        className="flex h-3 w-full overflow-hidden rounded-full"
-      >
+      <div role="img" aria-label={summary} title={summary} className="flex h-2 w-full gap-0.5">
         {SEGMENTS.map((s) => {
           const segment = bar[s.key]
           if (segment.count === 0) return null
@@ -38,14 +33,14 @@ export function BiasBar({ bar }: { bar: BiasBarData }) {
           return (
             <div
               key={s.key}
-              className={`${s.colorClass} h-full border-r-2 border-white last:border-r-0 dark:border-neutral-950`}
+              className={`${s.colorClass} h-full`}
               style={{ width: `${widthPct}%` }}
               title={`${segment.count} ${s.label}${segment.lowConfidenceCount > 0 ? ` (${segment.lowConfidenceCount} low confidence)` : ''}`}
             />
           )
         })}
       </div>
-      <p className="mt-1 text-xs text-neutral-500">
+      <p className="text-muted mt-1 text-xs">
         {ratedTotal} rated sources{unrated > 0 ? ` · unrated: ${unrated}` : ''} · Based on current source ratings
       </p>
     </div>

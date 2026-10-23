@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 
+import { Button } from '../../../components/ui/Button'
 import { useAuthStore } from '../../../lib/authStore'
 import { useSavedIds, useSavedToggle } from '../hooks/useSaved'
 
@@ -21,24 +22,20 @@ export function SaveToggleButton({ kind, id }: { kind: Kind; id: string }) {
 
   if (!isSignedIn) {
     return (
-      <Link to="/login" className="text-sm underline">
+      <Link to="/login" className="text-sm" style={{ color: 'var(--color-accent)' }}>
         Sign in to {idleLabel.toLowerCase()}
       </Link>
     )
   }
 
   return (
-    <button
-      type="button"
+    <Button
+      variant={isSaved ? 'secondary' : 'primary'}
       disabled={pending}
       onClick={() => (isSaved ? unsave.mutate(id) : save.mutate(id))}
-      className={`rounded border px-3 py-1 text-sm disabled:opacity-50 ${
-        isSaved
-          ? 'border-neutral-900 bg-neutral-900 text-white dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-900'
-          : 'border-neutral-300 dark:border-neutral-700'
-      }`}
+      style={{ fontSize: '13px' }}
     >
-      {isSaved ? activeLabel : idleLabel}
-    </button>
+      {isSaved ? `${activeLabel} ✓` : idleLabel}
+    </Button>
   )
 }

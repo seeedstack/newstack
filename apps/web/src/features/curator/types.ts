@@ -48,3 +48,11 @@ import type { components } from '../../../../../packages/shared-types/src/openap
 
 export type BlindspotItem = components['schemas']['BlindspotItem']
 export type BlindspotFeedResponse = components['schemas']['BlindspotFeedResponse']
+export type ClusterReportListItem = components['schemas']['ClusterReportListItem']
+export type ClusterReportListResponse = components['schemas']['ClusterReportListResponse']
+
+export interface ClusterReportListFilters {
+  resolved?: boolean
+  limit: number
+  offset: number
+}

@@ -24,6 +24,6 @@ describe('SaveToggleButton', () => {
       new Response(JSON.stringify({ items: ['story-1'] }), { status: 200, headers: { 'content-type': 'application/json' } })
     )
     renderWithProviders(<SaveToggleButton kind="stories" id="story-1" />)
-    expect(await screen.findByText('Saved')).toBeInTheDocument()
+    expect(await screen.findByText('Saved ✓')).toBeInTheDocument()
   })
 })

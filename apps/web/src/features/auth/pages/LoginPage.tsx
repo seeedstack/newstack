@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
+import { Button } from '../../../components/ui/Button'
 import { useLogin } from '../hooks/useAuthMutations'
+import { AuthCard } from '../components/AuthCard'
 
 export function LoginPage() {
   const [email, setEmail] = useState('')
@@ -15,39 +17,28 @@ export function LoginPage() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex max-w-sm flex-col gap-3">
-      <h1 className="text-xl font-semibold">Log in</h1>
-      <input
-        type="email"
-        required
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="rounded border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-      />
-      <input
-        type="password"
-        required
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="rounded border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-      />
-      {login.isError && (
-        // §9: one generic message for both unknown email and wrong password.
-        <p className="text-sm text-red-700 dark:text-red-400">Invalid email or password.</p>
-      )}
-      <button
-        type="submit"
-        disabled={login.isPending}
-        className="rounded bg-neutral-900 px-3 py-2 text-white disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
-      >
-        {login.isPending ? 'Logging in…' : 'Log in'}
-      </button>
-      <div className="flex justify-between text-sm text-neutral-500">
-        <Link to="/signup" className="underline">Sign up</Link>
-        <Link to="/reset" className="underline">Forgot password?</Link>
-      </div>
-    </form>
+    <AuthCard title="Log in">
+      <form onSubmit={onSubmit} className="flex flex-col gap-3">
+        <div className="field">
+          <label htmlFor="email">Email</label>
+          <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="input" />
+        </div>
+        <div className="field">
+          <label htmlFor="password">Password</label>
+          <input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="input" />
+        </div>
+        {login.isError && (
+          // §9: one generic message for both unknown email and wrong password.
+          <p className="text-sm" style={{ color: 'var(--color-danger-700)' }}>Invalid email or password.</p>
+        )}
+        <Button type="submit" variant="primary" block disabled={login.isPending}>
+          {login.isPending ? 'Logging in…' : 'Log in'}
+        </Button>
+        <div className="text-muted flex justify-between text-sm">
+          <Link to="/signup" style={{ color: 'var(--color-accent)' }}>Sign up</Link>
+          <Link to="/reset" style={{ color: 'var(--color-accent)' }}>Forgot password?</Link>
+        </div>
+      </form>
+    </AuthCard>
   )
 }
