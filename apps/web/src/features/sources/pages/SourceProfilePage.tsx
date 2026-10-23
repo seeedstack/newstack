@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import { Button } from '../../../components/ui/Button'
 import { IconAlert, IconArrowLeft } from '../../../components/ui/icons'
+import { SectionEyebrow } from '../../../components/ui/SectionEyebrow'
 import { Tag } from '../../../components/ui/Tag'
 import { EmptyState, ErrorState, LoadingState } from '../../../components/QueryStates'
 import { SaveToggleButton } from '../../saved'
@@ -48,6 +49,8 @@ export function SourceProfilePage() {
         <IconArrowLeft size={16} />
         Back
       </Button>
+
+      <SectionEyebrow>Source Profile</SectionEyebrow>
 
       {source.status === 'deprecated' && (
         <div className="flex items-center gap-3 p-3" style={{ background: 'var(--color-danger-100)', border: '2px solid var(--color-danger)' }}>

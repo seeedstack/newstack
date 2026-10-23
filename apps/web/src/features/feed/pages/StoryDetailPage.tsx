@@ -2,6 +2,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { Button } from '../../../components/ui/Button'
 import { IconArrowLeft } from '../../../components/ui/icons'
+import { SectionEyebrow } from '../../../components/ui/SectionEyebrow'
 import { EmptyState, ErrorState, LoadingState } from '../../../components/QueryStates'
 import { SaveToggleButton } from '../../saved'
 import { BiasColumn } from '../components/BiasColumn'
@@ -28,6 +29,7 @@ export function StoryDetailPage() {
   if (story.status === 'tombstoned') {
     return (
       <div className="flex flex-col gap-3">
+        <SectionEyebrow>The Story</SectionEyebrow>
         <h1 className="article-headline">{story.title}</h1>
         {story.redirectTo !== null ? (
           <p className="text-sm opacity-80">
@@ -53,6 +55,7 @@ export function StoryDetailPage() {
         Back
       </Button>
 
+      <SectionEyebrow>The Story</SectionEyebrow>
       <div className="flex items-start justify-between gap-4">
         <h1 className="article-headline" style={{ textWrap: 'pretty' }}>{story.title}</h1>
         <SaveToggleButton kind="stories" id={story.id} />

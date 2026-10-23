@@ -15,6 +15,6 @@ echo "==> starting api, ingestion, mailer, web"
 docker compose up --build -d
 
 echo
-echo "web:  http://localhost:5173"
+echo "web:  http://localhost:5174"
 echo "api:  http://localhost:3000/health"
 echo "logs: cd infra && docker compose logs -f"

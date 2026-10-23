@@ -1,16 +1,9 @@
 import { Link } from 'react-router-dom'
 
 import { SaveToggleButton } from '../../saved'
+import { timeAgo } from '../timeAgo'
 import type { FeedItem } from '../types'
 import { BiasBar } from './BiasBar'
-
-function timeAgo(iso: string): string {
-  const ms = Date.now() - new Date(iso).getTime()
-  const hours = Math.round(ms / 3_600_000)
-  if (hours < 1) return 'just now'
-  if (hours < 24) return `${hours}h ago`
-  return `${Math.round(hours / 24)}d ago`
-}
 
 export function FeedItemCard({ item }: { item: FeedItem }) {
   const sourceCount = item.ratedSourceCount + item.unratedSourceCount

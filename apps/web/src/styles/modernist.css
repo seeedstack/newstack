@@ -409,6 +409,28 @@ textarea.input { min-height: 90px; resize: vertical; }
 }
 .headline-link:hover { text-decoration-color: var(--color-text); }
 
+/* Lead story (UI_PORT_SPEC.md §4.5). FeedItem carries no image field anywhere in
+   openapi.yaml, so only the "otherwise" (no-image, full-width headline) branch is
+   reachable — the two-column image layout is dead code for the current API and is
+   skipped rather than built speculatively. */
+.lead-story { display: flex; flex-direction: column; gap: 16px; padding-bottom: clamp(32px, 4vw, 48px); margin-bottom: clamp(24px, 3vw, 40px); border-bottom: 1px solid var(--color-divider); }
+.lead-headline {
+  color: var(--color-text); font-family: var(--font-heading); font-weight: 800;
+  font-size: clamp(36px, 4.2vw, 60px); line-height: 1.0; letter-spacing: -0.02em; text-wrap: pretty;
+  text-decoration-line: underline; text-decoration-color: transparent; text-decoration-thickness: 1px;
+  text-underline-offset: 6px; transition: text-decoration-color 0.15s;
+}
+.lead-headline:hover { text-decoration-color: var(--color-text); }
+.lead-summary { max-width: 68ch; font-size: 16px; color: var(--color-text-secondary); }
+
+/* Editor's note band — full-bleed regardless of the parent's 1360px container. */
+.band-alt { width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); background: var(--color-surface-alt); border-top: 1px solid var(--color-divider); border-bottom: 1px solid var(--color-divider); padding: clamp(64px, 9vw, 140px) 0; }
+.band-alt-inner { max-width: 1360px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 48px); display: grid; grid-template-columns: 1fr; gap: 24px; }
+@media (min-width: 768px) { .band-alt-inner { grid-template-columns: 1fr 3fr; align-items: start; } }
+.band-alt-quote { font-family: var(--font-heading); font-size: 120px; line-height: 0.8; color: var(--india-saffron); margin: 0; }
+.band-alt-heading { font-family: var(--font-heading); font-weight: 800; max-width: 900px; }
+.band-alt-body { max-width: 900px; display: flex; flex-direction: column; gap: 12px; color: var(--color-text-secondary); }
+
 .feed-grid { display: grid; grid-template-columns: 1fr; }
 @media (min-width: 640px) {
   .feed-grid { grid-template-columns: repeat(2, 1fr); }

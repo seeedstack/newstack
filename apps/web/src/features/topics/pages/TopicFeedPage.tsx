@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom'
 
 import { FeedItemCard } from '../../feed'
 import { EmptyState, ErrorState, LoadingState, LoadMoreButton } from '../../../components/QueryStates'
+import { SectionEyebrow } from '../../../components/ui/SectionEyebrow'
 import { SaveToggleButton } from '../../saved'
 import { useTopicFeed, useTopics } from '../hooks/useTopics'
 
@@ -19,6 +20,7 @@ export function TopicFeedPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <SectionEyebrow>Topic</SectionEyebrow>
       <div className="flex items-center justify-between gap-4">
         <h1>{topic?.name ?? 'Topic'}</h1>
         {topicId !== '' && <SaveToggleButton kind="topics" id={topicId} />}
@@ -26,7 +28,7 @@ export function TopicFeedPage() {
       {items.length === 0 ? (
         <EmptyState message="No stories matching this topic in the last 14 days." />
       ) : (
-        <div className="grid grid-cols-1 gap-0.5 sm:grid-cols-2 lg:grid-cols-3" style={{ background: 'var(--color-divider)', border: '2px solid var(--color-divider)' }}>
+        <div className="feed-grid">
           {items.map((item) => (
             <FeedItemCard key={item.id} item={item} />
           ))}
