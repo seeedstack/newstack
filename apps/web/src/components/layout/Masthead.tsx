@@ -73,7 +73,7 @@ export function Masthead({ variant, isSignedIn, onLogout }: MastheadProps) {
         NEWSTACK
       </Link>
 
-      {variant === 'home' && <p className="masthead-tagline">Look beyond the headline.</p>}
+      {variant === 'home' && <p className="masthead-tagline">Less noise. More news. Zero bullshit.</p>}
 
       <div className="rule-double" aria-hidden>
         <span />

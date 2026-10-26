@@ -105,6 +105,16 @@ export function StoryDetailPage() {
           <BiasColumn key={col.key} label={col.label} colorClass={col.colorClass} cards={story.biasColumns[col.key]} />
         ))}
       </div>
+
+      {story.premiumBreakdown.locked && (
+        <div className="flex items-center justify-between gap-4 p-4" style={{ border: '2px solid var(--color-accent)' }}>
+          <p className="text-sm">
+            {story.premiumBreakdown.hiddenCardCount} more source{story.premiumBreakdown.hiddenCardCount === 1 ? '' : 's'} covering
+            this story aren't shown.
+          </p>
+          <Link to="/subscribe"><Button variant="primary">Subscribe to see all</Button></Link>
+        </div>
+      )}
     </div>
   )
 }

@@ -4,10 +4,11 @@ import Fastify, { type FastifyInstance } from "fastify";
 
 import { WEB_ORIGIN } from "./config.js";
 import { authRoutes } from "./features/auth/routes.js";
+import { billingAdminRoutes, billingPublicRoutes, billingRoutes, billingWebhookRoutes } from "./features/billing/routes.js";
 import { blindspotCuratorRoutes } from "./features/blindspot/routes.js";
 import { curatorRoutes } from "./features/curator/routes.js";
 import { feedRoutes } from "./features/feed/routes.js";
-import { storyRoutes } from "./features/story/routes.js";
+import { storyPremiumRoutes, storyRoutes } from "./features/story/routes.js";
 import { ratingCuratorRoutes, ratingPublicRoutes } from "./features/rating/routes.js";
 import { geoRatingCuratorRoutes, geoRatingPublicRoutes } from "./features/geo-rating/routes.js";
 import {
@@ -19,6 +20,7 @@ import { sourceCategoryCuratorRoutes } from "./features/source-category/routes.j
 import { savedRoutes } from "./features/saved/routes.js";
 import { sourceRoutes } from "./features/source/routes.js";
 import { topicRoutes } from "./features/topic/routes.js";
+import { adminPlugin } from "./plugins/admin.js";
 import { authPlugin } from "./plugins/auth.js";
 import { cachePlugin } from "./plugins/cache.js";
 import { curatorPlugin } from "./plugins/curator.js";
@@ -44,15 +46,28 @@ export function buildApp(): FastifyInstance {
   // CSRF exploits ambient browser credentials (cookies), and curator routes carry none —
   // they're authenticated by an explicit header a cross-site page can't attach, and are
   // called by scripts/tooling with no browser Origin at all.
+  // /webhooks/* is exempt from both checks below for the same reason /api/curator/* is:
+  // the caller (PayPal) carries no browser Origin and is authenticated by its own signed
+  // payload (gateway.verifyWebhook), not ambient cookies — CSRF defenses don't apply.
   app.addHook("onRequest", async (request, reply) => {
-    if (!MUTATING_METHODS.has(request.method) || request.url.startsWith("/api/curator/")) return;
+    if (
+      !MUTATING_METHODS.has(request.method) ||
+      request.url.startsWith("/api/curator/") ||
+      request.url.startsWith("/webhooks/")
+    )
+      return;
     if (request.headers.origin !== WEB_ORIGIN) {
       reply.code(403).send({ error: "origin_mismatch" });
       return reply;
     }
   });
   app.addHook("preValidation", async (request, reply) => {
-    if (!MUTATING_METHODS.has(request.method) || request.url.startsWith("/api/curator/")) return;
+    if (
+      !MUTATING_METHODS.has(request.method) ||
+      request.url.startsWith("/api/curator/") ||
+      request.url.startsWith("/webhooks/")
+    )
+      return;
     const contentType = request.headers["content-type"] ?? "";
     if (!contentType.startsWith("application/json")) {
       reply.code(415).send({ error: "unsupported_content_type" });
@@ -95,6 +110,10 @@ export function buildApp(): FastifyInstance {
   // /auth/* — neither plugin; CSRF checks and rate limits only (rate limits: inside authRoutes).
   app.register(authRoutes, { prefix: "/auth" });
 
+  // /webhooks/* — no session, no auth plugin; signature-verified instead (see the CSRF
+  // exemption above and billingWebhookRoutes' own addContentTypeParser for the raw body).
+  app.register(billingWebhookRoutes, { prefix: "/webhooks" });
+
   // /api/public/* — cache plugin, no auth plugin: handlers here cannot read user identity.
   // The plugin is called directly (not via .register()) so its hook lands on this same
   // scope instead of an isolated child context — Fastify's encapsulation would otherwise
@@ -109,6 +128,7 @@ export function buildApp(): FastifyInstance {
     await geoRatingPublicRoutes(publicScope);
     await ownershipPublicRoutes(publicScope);
     await sourceRoutes(publicScope);
+    await billingPublicRoutes(publicScope);
   }, { prefix: "/api/public" });
 
   // /api/* — auth plugin, no cache plugin. Same direct-call reasoning as above.
@@ -118,7 +138,16 @@ export function buildApp(): FastifyInstance {
     // the auth plugin an actual registered route to run its hook against.
     apiScope.get("/whoami", async (request) => ({ userId: request.userId }));
     await savedRoutes(apiScope);
+    await billingRoutes(apiScope);
+    await storyPremiumRoutes(apiScope);
   }, { prefix: "/api" });
+
+  // /api/admin/* — user auth plugin plus is_admin check (PAYPAL_SPEC §4.12).
+  app.register(async (adminScope) => {
+    await authPlugin(adminScope);
+    await adminPlugin(adminScope);
+    await billingAdminRoutes(adminScope);
+  }, { prefix: "/api/admin" });
 
   // /api/curator/* — shared-secret auth (curatorPlugin), no user-auth or cache plugin.
   app.register(async (curatorScope) => {

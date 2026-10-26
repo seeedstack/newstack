@@ -400,7 +400,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 .kicker { display: flex; align-items: baseline; gap: 10px; font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
 .kicker-rule { width: 18px; height: 2px; flex: none; align-self: center; background: var(--india-saffron); }
 
-.feed-card { display: flex; flex-direction: column; gap: 12px; padding: 20px 0; border-bottom: 1px solid var(--color-divider); background: transparent; }
+.feed-card { display: flex; flex-direction: column; gap: 12px; padding: 20px clamp(16px, 2vw, 24px); border-bottom: 1px solid var(--color-divider); background: transparent; }
 .headline-link {
   color: var(--color-text); font-family: var(--font-headline); font-weight: 700;
   font-size: clamp(19px, 2vw, 22px); line-height: 1.25; letter-spacing: -0.005em; text-wrap: pretty;
@@ -433,13 +433,11 @@ textarea.input { min-height: 90px; resize: vertical; }
 
 .feed-grid { display: grid; grid-template-columns: 1fr; }
 @media (min-width: 640px) {
-  .feed-grid { grid-template-columns: repeat(2, 1fr); }
-  .feed-grid > * { border-left: 1px solid var(--color-divider); padding-left: clamp(24px, 3vw, 40px); }
-  .feed-grid > *:nth-child(2n+1) { border-left: none; padding-left: 0; }
+  .feed-grid { grid-template-columns: repeat(2, 1fr); column-gap: clamp(24px, 3vw, 40px); }
+  .feed-grid > *:not(:nth-child(2n+1)) { border-left: 1px solid var(--color-divider); }
 }
 @media (min-width: 1024px) {
   .feed-grid { grid-template-columns: repeat(3, 1fr); }
-  .feed-grid > * { border-left: 1px solid var(--color-divider); padding-left: clamp(24px, 3vw, 40px); }
-  .feed-grid > *:nth-child(3n+1) { border-left: none; padding-left: 0; }
+  .feed-grid > *:not(:nth-child(3n+1)) { border-left: 1px solid var(--color-divider); }
 }
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { buildApp } from "../src/app.js";
+import { buildApp, WEB_ORIGIN } from "../src/app.js";
+import { signAccessToken } from "../src/features/auth/jwt.js";
 import {
   addCoverage,
   createTestSource,
@@ -9,6 +10,7 @@ import {
   rateSource,
   tombstoneStory,
 } from "./feed-helpers.js";
+import { cleanupTestUser, createUser } from "./helpers.js";
 import { delTestCache, setTestCache } from "./redis-helpers.js";
 
 describe("GET /api/public/stories/:id", () => {
@@ -105,5 +107,53 @@ describe("GET /api/public/stories/:id", () => {
     expect(res.json()).toEqual(fake);
     await delTestCache(`page:story:${storyId}`);
     await app.close();
+  });
+
+  it("caps each bias column to the free-tier limit and flags premiumBreakdown.locked", async () => {
+    const sources = await Promise.all([createTestSource("cap-1"), createTestSource("cap-2"), createTestSource("cap-3")]);
+    for (const s of sources) await rateSource(s, { biasRating: "left", confidence: "high" });
+    const { storyId } = await createTestStory(sources[0]);
+    await addCoverage(storyId, sources[1]);
+    await addCoverage(storyId, sources[2]);
+
+    await delTestCache(`page:story:${storyId}`);
+    const app = buildApp();
+    const res = await app.inject({ method: "GET", url: `/api/public/stories/${storyId}` });
+    const body = res.json();
+
+    expect(body.biasColumns.left).toHaveLength(2); // FREE_SOURCE_CARDS_PER_CATEGORY
+    expect(body.premiumBreakdown).toEqual({ locked: true, hiddenCardCount: 1 });
+    await delTestCache(`page:story:${storyId}`);
+    await app.close();
+  });
+});
+
+describe("GET /api/stories/:id/full-breakdown", () => {
+  const EMAIL = "story-premium-test@mail.example";
+
+  it("rejects an unauthenticated request", async () => {
+    const app = buildApp();
+    const res = await app.inject({ method: "GET", url: "/api/stories/00000000-0000-0000-0000-000000000000/full-breakdown" });
+    expect(res.statusCode).toBe(401);
+    await app.close();
+  });
+
+  it("403s a signed-in user with no active subscription", async () => {
+    await cleanupTestUser(EMAIL);
+    const userId = await createUser(EMAIL, "a-strong-passphrase");
+    const token = signAccessToken(userId, 1);
+    const sourceA = await createTestSource("premium-gate");
+    const { storyId } = await createTestStory(sourceA);
+
+    const app = buildApp();
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/stories/${storyId}/full-breakdown`,
+      headers: { authorization: `Bearer ${token}`, origin: WEB_ORIGIN },
+    });
+    expect(res.statusCode).toBe(403);
+    expect(res.json().error).toBe("subscription_required");
+    await app.close();
+    await cleanupTestUser(EMAIL);
   });
 });
