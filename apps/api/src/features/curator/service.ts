@@ -1,6 +1,7 @@
 import type { Pool } from "pg";
 
 import {
+  fetchClusterReports,
   fetchStoryClusterVersion,
   hideArticle,
   hideStory,
@@ -8,6 +9,7 @@ import {
   insertSource,
   insertTopic,
   type ClusterReportInput,
+  type ClusterReportRow,
   type NewSourceInput,
 } from "./repo.js";
 
@@ -108,4 +110,71 @@ export async function reportClusterError(
     reportedBy: b.reportedBy,
   };
   return insertClusterReport(pool, input);
+}
+
+export interface ClusterReportListItemResponse {
+  id: string;
+  kind: "wrong_merge" | "should_merge";
+  storyId: string;
+  storyTitle: string;
+  articleId: string | null;
+  articleTitle: string | null;
+  otherStoryId: string | null;
+  otherStoryTitle: string | null;
+  clusterVersion: string;
+  reportedBy: string;
+  createdAt: string;
+  resolvedAt: string | null;
+}
+
+export interface ClusterReportListResponse {
+  items: ClusterReportListItemResponse[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface RawClusterReportListQuery {
+  resolved?: unknown;
+  limit?: unknown;
+  offset?: unknown;
+}
+
+const REPORT_DEFAULT_LIMIT = 50;
+const REPORT_MAX_LIMIT = 100;
+
+function toClusterReportItem(row: ClusterReportRow): ClusterReportListItemResponse {
+  return {
+    id: row.id,
+    kind: row.kind,
+    storyId: row.story_id,
+    storyTitle: row.story_title,
+    articleId: row.article_id,
+    articleTitle: row.article_title,
+    otherStoryId: row.other_story_id,
+    otherStoryTitle: row.other_story_title,
+    clusterVersion: row.cluster_version,
+    reportedBy: row.reported_by,
+    createdAt: row.created_at.toISOString(),
+    resolvedAt: row.resolved_at?.toISOString() ?? null,
+  };
+}
+
+// Curator review queue — unblocks the frontend list screen (mvp-todo: "API gap, not a
+// frontend one"). Resolving a report is out of scope here: `resolved_at` has no writer
+// anywhere yet, so this stays read-only until that's asked for.
+export async function listClusterReports(pool: Pool, query: RawClusterReportListQuery): Promise<ClusterReportListResponse> {
+  let resolved: boolean | null = null;
+  if (query.resolved === "true") resolved = true;
+  else if (query.resolved === "false") resolved = false;
+  else if (query.resolved !== undefined) throw new ValidationError("invalid_resolved");
+
+  const limitRaw = typeof query.limit === "string" ? Number(query.limit) : REPORT_DEFAULT_LIMIT;
+  if (!Number.isInteger(limitRaw) || limitRaw < 1 || limitRaw > REPORT_MAX_LIMIT) throw new ValidationError("invalid_limit");
+
+  const offsetRaw = typeof query.offset === "string" ? Number(query.offset) : 0;
+  if (!Number.isInteger(offsetRaw) || offsetRaw < 0) throw new ValidationError("invalid_offset");
+
+  const { items, total } = await fetchClusterReports(pool, { resolved, limit: limitRaw, offset: offsetRaw });
+  return { items: items.map(toClusterReportItem), total, limit: limitRaw, offset: offsetRaw };
 }

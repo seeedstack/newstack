@@ -1,4 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,500&family=Source+Sans+3:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
+@import './styles/modernist.css' layer(components);
 
 /*
  * Bias spectrum ramp (ARCHITECTURE §10: "one diverging 5-step colour scale
@@ -6,6 +8,7 @@
  * Diverging ramps are checked for lightness monotonicity per arm, not run
  * through the categorical CVD validator (dataviz skill, color-formula.md
  * "Scope" note) — poles reuse the skill's default blue/red diverging pair.
+ * The Modernist reference design is light-only, so there's no dark variant.
  */
 @theme {
   --color-bias-left: #184f95;
@@ -16,17 +19,12 @@
   --color-bias-unrated: #e1e0d9;
 }
 
-@media (prefers-color-scheme: dark) {
-  @theme {
-    --color-bias-left: #3987e5;
-    --color-bias-centerleft: #104281;
-    --color-bias-center: #383835;
-    --color-bias-centerright: #7a2f2b;
-    --color-bias-right: #e66767;
-    --color-bias-unrated: #2c2c2a;
-  }
+html {
+  color-scheme: light;
+  scroll-behavior: smooth;
 }
 
-html {
-  color-scheme: light dark;
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition: none !important; }
 }

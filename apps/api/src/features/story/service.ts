@@ -31,6 +31,27 @@ export interface StoryDetailResponse {
   ratedSourceCount: number;
   unratedSourceCount: number;
   biasColumns: BiasColumns;
+  // Reader subscription gate (PAYPAL_SPEC.md): this aggregator links out to publishers rather
+  // than hosting full article bodies, so there's no article text to paywall — the premium
+  // feature gated instead is the full cross-source bias breakdown. `GET /api/public/stories/:id`
+  // (shared cache, no user identity per ARCHITECTURE §10) always returns this capped; the
+  // entitled-only full list is `GET /api/stories/:id/full-breakdown` (authenticated, uncached).
+  premiumBreakdown: { locked: boolean; hiddenCardCount: number };
+}
+
+// Free-tier cap per bias column (PAYPAL_SPEC §4.2 FR-P3 teaser analog). Tunable post-launch,
+// same complexity-budget footing as FREE_PREMIUM_READS_PER_MONTH.
+export const FREE_SOURCE_CARDS_PER_CATEGORY = 2;
+
+export function applyFreeTierCap(detail: StoryDetailResponse): StoryDetailResponse {
+  let hiddenCardCount = 0;
+  const capped: BiasColumns = { left: [], centerLeft: [], center: [], centerRight: [], right: [], notRated: [] };
+  for (const key of Object.keys(detail.biasColumns) as (keyof BiasColumns)[]) {
+    const cards = detail.biasColumns[key];
+    capped[key] = cards.slice(0, FREE_SOURCE_CARDS_PER_CATEGORY);
+    hiddenCardCount += Math.max(0, cards.length - FREE_SOURCE_CARDS_PER_CATEGORY);
+  }
+  return { ...detail, biasColumns: capped, premiumBreakdown: { locked: hiddenCardCount > 0, hiddenCardCount } };
 }
 
 const CATEGORY_KEY: Record<BiasCategory, keyof BiasColumns> = {
@@ -109,6 +130,7 @@ export async function getStoryDetail(pool: Pool, storyId: string): Promise<Story
       ratedSourceCount: 0,
       unratedSourceCount: 0,
       biasColumns: emptyColumns(),
+      premiumBreakdown: { locked: false, hiddenCardCount: 0 },
     };
   }
 
@@ -139,5 +161,6 @@ export async function getStoryDetail(pool: Pool, storyId: string): Promise<Story
     ratedSourceCount: ratedCounts?.rated_source_count ?? 0,
     unratedSourceCount: ratedCounts?.unrated_source_count ?? 0,
     biasColumns,
+    premiumBreakdown: { locked: false, hiddenCardCount: 0 }, // set by applyFreeTierCap for the public route
   };
 }

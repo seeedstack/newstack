@@ -1,19 +1,34 @@
 import { Link } from 'react-router-dom'
 
+import { SaveToggleButton } from '../../saved'
+import { timeAgo } from '../timeAgo'
 import type { FeedItem } from '../types'
 import { BiasBar } from './BiasBar'
 
 export function FeedItemCard({ item }: { item: FeedItem }) {
+  const sourceCount = item.ratedSourceCount + item.unratedSourceCount
+
   return (
-    <article className="rounded border border-neutral-200 p-4 dark:border-neutral-800">
-      <h2 className="text-lg font-medium">
-        <Link to={`/stories/${item.id}`} className="hover:underline">
+    <article className="feed-card">
+      <div className="kicker">
+        <span className="kicker-rule" aria-hidden />
+        <span>{sourceCount} {sourceCount === 1 ? 'Source' : 'Sources'}</span>
+      </div>
+      <p className="text-muted text-xs">{timeAgo(item.lastCoverageAt)}</p>
+      <h2 style={{ margin: 0 }}>
+        <Link to={`/stories/${item.id}`} className="headline-link">
           {item.title}
         </Link>
       </h2>
-      {item.summary !== null && <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">{item.summary}</p>}
-      <div className="mt-3">
-        <BiasBar bar={item.biasBar} />
+      {item.summary !== null && (
+        <p className="line-clamp-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{item.summary}</p>
+      )}
+      <BiasBar bar={item.biasBar} />
+      <div className="mt-auto flex items-center justify-between pt-1">
+        <Link to={`/stories/${item.id}`} className="text-xs font-semibold" style={{ color: 'var(--color-accent-700)' }}>
+          Compare headlines →
+        </Link>
+        <SaveToggleButton kind="stories" id={item.id} />
       </div>
     </article>
   )

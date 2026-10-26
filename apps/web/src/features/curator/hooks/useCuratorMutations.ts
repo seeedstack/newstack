@@ -1,15 +1,17 @@
-import { useInfiniteQuery, useMutation } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
 
 import {
   createTopic,
   getBlindspotFeed,
+  getClusterReports,
   hideArticle,
   hideStory,
   onboardSource,
   reportClusterError,
+  setSourceCategories,
   submitRating,
 } from '../api'
-import type { NewClusterReport, NewRating, NewSource } from '../types'
+import type { ClusterReportListFilters, NewClusterReport, NewRating, NewSource } from '../types'
 
 export function useOnboardSource() {
   return useMutation({ mutationFn: (input: NewSource) => onboardSource(input) })
@@ -38,6 +40,12 @@ export function useSubmitRating() {
   return useMutation({ mutationFn: ({ sourceId, input }: { sourceId: string; input: NewRating }) => submitRating(sourceId, input) })
 }
 
+export function useSetSourceCategories() {
+  return useMutation({
+    mutationFn: ({ sourceId, categories }: { sourceId: string; categories: string[] }) => setSourceCategories(sourceId, categories),
+  })
+}
+
 export function useBlindspotFeed() {
   return useInfiniteQuery({
     queryKey: ['curator', 'blindspot'],
@@ -45,4 +53,8 @@ export function useBlindspotFeed() {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   })
+}
+
+export function useClusterReports(filters: ClusterReportListFilters) {
+  return useQuery({ queryKey: ['curator', 'cluster-reports', filters], queryFn: () => getClusterReports(filters) })
 }

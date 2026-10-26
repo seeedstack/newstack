@@ -115,7 +115,9 @@ def apply_embed_result(conn: psycopg.Connection, *, article_id: str, h: str, vec
              "cluster_version": active_cluster_version, "id": article_id},
         )
 
-        if decision.action == "MOVE":
+        # Not just MOVE: a re-embedded article can also drift to a brand-new story (CREATE)
+        # when it no longer fits anywhere — same "left its old story" case, same cleanup.
+        if current_story_id is not None and str(current_story_id) != target_story_id:
             conn.execute(LINEAGE_SQL, {"old_story_id": current_story_id, "new_story_id": target_story_id})
             conn.execute(TOMBSTONE_SQL, {"old_story_id": current_story_id})
 

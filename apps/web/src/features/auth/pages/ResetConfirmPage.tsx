@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 
+import { Button } from '../../../components/ui/Button'
 import { ApiError } from '../../../lib/apiClient'
 import { useConfirmPasswordReset } from '../hooks/useAuthMutations'
 import { readTokenFromHash } from '../utils/hashToken'
+import { AuthCard } from '../components/AuthCard'
 
 export function ResetConfirmPage() {
   const [newPassword, setNewPassword] = useState('')
@@ -16,13 +18,15 @@ export function ResetConfirmPage() {
     confirm.mutate({ token, newPassword })
   }
 
-  if (token === null) return <p className="text-sm">Missing reset link.</p>
+  if (token === null) return <AuthCard title="Reset password"><p className="text-sm">Missing reset link.</p></AuthCard>
 
   if (confirm.isSuccess) {
     return (
-      <p className="text-sm">
-        Password reset. <Link to="/login" className="underline">Log in</Link>
-      </p>
+      <AuthCard title="Password reset">
+        <p className="text-sm">
+          You can now <Link to="/login" style={{ color: 'var(--color-accent)' }}>log in</Link>.
+        </p>
+      </AuthCard>
     )
   }
 
@@ -31,36 +35,27 @@ export function ResetConfirmPage() {
   const alreadyUsed = confirm.error instanceof ApiError && confirm.error.code === 'invalid_or_used'
 
   return (
-    <form onSubmit={onSubmit} className="flex max-w-sm flex-col gap-3">
-      <h1 className="text-xl font-semibold">Choose a new password</h1>
-      <input
-        type="password"
-        required
-        minLength={10}
-        maxLength={128}
-        placeholder="New password (10-128 characters)"
-        value={newPassword}
-        onChange={(e) => setNewPassword(e.target.value)}
-        className="rounded border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-      />
-      {confirm.isError && (
-        <p className="text-sm text-red-700 dark:text-red-400">
-          {alreadyUsed ? (
-            <>
-              This link was already used. <Link to="/login" className="underline">Log in</Link>
-            </>
-          ) : (
-            'That link is invalid or expired.'
-          )}
-        </p>
-      )}
-      <button
-        type="submit"
-        disabled={confirm.isPending}
-        className="rounded bg-neutral-900 px-3 py-2 text-white disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
-      >
-        {confirm.isPending ? 'Resetting…' : 'Reset password'}
-      </button>
-    </form>
+    <AuthCard title="Choose a new password">
+      <form onSubmit={onSubmit} className="flex flex-col gap-3">
+        <div className="field">
+          <label htmlFor="newPassword">New password (10-128 characters)</label>
+          <input id="newPassword" type="password" required minLength={10} maxLength={128} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="input" />
+        </div>
+        {confirm.isError && (
+          <p className="text-sm" style={{ color: 'var(--color-danger-700)' }}>
+            {alreadyUsed ? (
+              <>
+                This link was already used. <Link to="/login" style={{ color: 'var(--color-accent)' }}>Log in</Link>
+              </>
+            ) : (
+              'That link is invalid or expired.'
+            )}
+          </p>
+        )}
+        <Button type="submit" variant="primary" block disabled={confirm.isPending}>
+          {confirm.isPending ? 'Resetting…' : 'Reset password'}
+        </Button>
+      </form>
+    </AuthCard>
   )
 }

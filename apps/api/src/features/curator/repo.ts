@@ -80,3 +80,53 @@ export async function fetchStoryClusterVersion(pool: Pool | PoolClient, storyId:
   ]);
   return result.rows[0]?.cluster_version ?? null;
 }
+
+export interface ClusterReportRow {
+  id: string;
+  kind: "wrong_merge" | "should_merge";
+  story_id: string;
+  story_title: string;
+  article_id: string | null;
+  article_title: string | null;
+  other_story_id: string | null;
+  other_story_title: string | null;
+  cluster_version: string;
+  reported_by: string;
+  created_at: Date;
+  resolved_at: Date | null;
+}
+
+export interface ClusterReportListFilters {
+  resolved: boolean | null; // null = both
+  limit: number;
+  offset: number;
+}
+
+// Curator-internal review queue (§7's live error signal) — plain offset pagination like the
+// source registry: curator-filed reports are a low-volume, curator-facing list, not an
+// unbounded public feed.
+export async function fetchClusterReports(
+  pool: Pool,
+  filters: ClusterReportListFilters
+): Promise<{ items: ClusterReportRow[]; total: number }> {
+  const where = filters.resolved === null ? [] : [filters.resolved ? "cr.resolved_at IS NOT NULL" : "cr.resolved_at IS NULL"];
+  const whereClause = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
+
+  const countResult = await pool.query<{ total: string }>(`SELECT count(*) AS total FROM cluster_reports cr ${whereClause}`);
+
+  const itemsResult = await pool.query<ClusterReportRow>(
+    `SELECT cr.id, cr.kind, cr.story_id, s.title AS story_title, cr.article_id, a.title AS article_title,
+            cr.other_story_id, os.title AS other_story_title, cr.cluster_version, cr.reported_by,
+            cr.created_at, cr.resolved_at
+     FROM cluster_reports cr
+     JOIN stories s ON s.id = cr.story_id
+     LEFT JOIN articles a ON a.id = cr.article_id
+     LEFT JOIN stories os ON os.id = cr.other_story_id
+     ${whereClause}
+     ORDER BY cr.created_at DESC
+     LIMIT $1 OFFSET $2`,
+    [filters.limit, filters.offset]
+  );
+
+  return { items: itemsResult.rows, total: Number(countResult.rows[0].total) };
+}

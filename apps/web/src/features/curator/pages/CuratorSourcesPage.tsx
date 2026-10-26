@@ -1,10 +1,60 @@
 import { useState, type FormEvent } from 'react'
 
 import { CuratorApiError } from '../lib/curatorFetch'
-import { useOnboardSource, useSubmitRating } from '../hooks/useCuratorMutations'
+import { useOnboardSource, useSetSourceCategories, useSubmitRating } from '../hooks/useCuratorMutations'
 import type { BiasRating, Confidence } from '../types'
 
 const inputClass = 'rounded border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900'
+
+// PRODUCT §5.9's fixed list; multi-valued, curator-assigned, never derived.
+const CATEGORIES = ['national', 'regional', 'language', 'business', 'geopolitical', 'specialist'] as const
+
+function AssignCategoriesForm() {
+  const [sourceId, setSourceId] = useState('')
+  const [categories, setCategories] = useState<Set<string>>(new Set())
+  const setSourceCategories = useSetSourceCategories()
+
+  function toggle(category: string) {
+    setCategories((prev) => {
+      const next = new Set(prev)
+      if (next.has(category)) next.delete(category)
+      else next.add(category)
+      return next
+    })
+  }
+
+  function onSubmit(e: FormEvent) {
+    e.preventDefault()
+    setSourceCategories.mutate({ sourceId, categories: [...categories] })
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="flex max-w-md flex-col gap-3">
+      <h2 className="text-lg font-medium">Assign directory categories</h2>
+      <p className="text-xs text-neutral-500">
+        Replaces the source's whole category set (PRODUCT §5.9) — a descriptive tag, not a rating.
+      </p>
+      <input required placeholder="Source id" value={sourceId} onChange={(e) => setSourceId(e.target.value)} className={inputClass} />
+      <div className="flex flex-wrap gap-2">
+        {CATEGORIES.map((category) => (
+          <label key={category} className="flex items-center gap-1.5 text-sm">
+            <input type="checkbox" checked={categories.has(category)} onChange={() => toggle(category)} />
+            {category}
+          </label>
+        ))}
+      </div>
+      {setSourceCategories.isError && <p className="text-sm text-red-700 dark:text-red-400">Couldn't set categories.</p>}
+      {setSourceCategories.isSuccess && <p className="text-sm text-green-700 dark:text-green-400">Categories updated.</p>}
+      <button
+        type="submit"
+        disabled={setSourceCategories.isPending}
+        className="rounded bg-neutral-900 px-3 py-2 text-white disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
+      >
+        {setSourceCategories.isPending ? 'Saving…' : 'Save categories'}
+      </button>
+    </form>
+  )
+}
 
 function OnboardSourceForm() {
   const [form, setForm] = useState({ name: '', domain: '', countryCode: 'IN', language: 'en', feedTimezone: 'Asia/Kolkata' })
@@ -135,6 +185,7 @@ export function CuratorSourcesPage() {
       <h1 className="text-xl font-semibold">Sources</h1>
       <OnboardSourceForm />
       <RateSourceForm />
+      <AssignCategoriesForm />
     </div>
   )
 }

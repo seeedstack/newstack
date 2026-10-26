@@ -73,7 +73,7 @@ jobs:
       # No bundling step for Python — "build" here means the deployable artifact actually
       # builds (ARCHITECTURE §2's worker runs from this image, per infra/docker-compose.yml).
       - name: Build
-        run: docker build -t newstack-ingestion-ci apps/ingestion
+        run: docker build -t newstack-ingestion-ci -f apps/ingestion/Dockerfile .
 
   deploy:
     needs: test

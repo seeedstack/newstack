@@ -15,6 +15,14 @@ function post(app: ReturnType<typeof buildApp>, path: string, body: unknown) {
   });
 }
 
+function get(app: ReturnType<typeof buildApp>, path: string) {
+  return app.inject({
+    method: "GET",
+    url: `/api/curator${path}`,
+    headers: { "x-curator-key": CURATOR_KEY },
+  });
+}
+
 describe("curator auth", () => {
   it("rejects every curator route without the key", async () => {
     const app = buildApp();
@@ -190,6 +198,81 @@ describe("POST /api/curator/cluster-reports", () => {
       reportedBy: "curator-1",
     });
     expect(res.statusCode).toBe(404);
+    await app.close();
+  });
+});
+
+describe("GET /api/curator/cluster-reports", () => {
+  it("rejects without the curator key", async () => {
+    const app = buildApp();
+    const res = await app.inject({ method: "GET", url: "/api/curator/cluster-reports" });
+    expect(res.statusCode).toBe(401);
+    await app.close();
+  });
+
+  it("lists a filed report with the story/article titles resolved", async () => {
+    const sourceId = await createTestSource("curator-cluster-list");
+    const { storyId, headlineArticleId } = await createTestStory(sourceId);
+    const app = buildApp();
+
+    const filed = await post(app, "/cluster-reports", {
+      kind: "wrong_merge",
+      storyId,
+      articleId: headlineArticleId,
+      reportedBy: "curator-list-1",
+    });
+    const { id } = filed.json();
+
+    const res = await get(app, "/cluster-reports");
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.limit).toBe(50);
+    expect(body.offset).toBe(0);
+    const item = body.items.find((r: { id: string }) => r.id === id);
+    expect(item).toMatchObject({
+      kind: "wrong_merge",
+      storyId,
+      articleId: headlineArticleId,
+      reportedBy: "curator-list-1",
+      resolvedAt: null,
+    });
+    expect(typeof item.storyTitle).toBe("string");
+    expect(typeof item.articleTitle).toBe("string");
+    await app.close();
+  });
+
+  it("filters by resolved=false, excluding nothing since nothing resolves reports yet", async () => {
+    const sourceId = await createTestSource("curator-cluster-list-unresolved");
+    const { storyId, headlineArticleId } = await createTestStory(sourceId);
+    const app = buildApp();
+
+    const filed = await post(app, "/cluster-reports", {
+      kind: "wrong_merge",
+      storyId,
+      articleId: headlineArticleId,
+      reportedBy: "curator-list-2",
+    });
+    const { id } = filed.json();
+
+    const res = await get(app, "/cluster-reports?resolved=false");
+    expect(res.statusCode).toBe(200);
+    expect(res.json().items.some((r: { id: string }) => r.id === id)).toBe(true);
+    await app.close();
+  });
+
+  it("rejects an invalid resolved value", async () => {
+    const app = buildApp();
+    const res = await get(app, "/cluster-reports?resolved=maybe");
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toEqual({ error: "invalid_resolved" });
+    await app.close();
+  });
+
+  it("rejects an out-of-range limit", async () => {
+    const app = buildApp();
+    const res = await get(app, "/cluster-reports?limit=1000");
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toEqual({ error: "invalid_limit" });
     await app.close();
   });
 });
